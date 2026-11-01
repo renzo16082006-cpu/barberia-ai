@@ -38,3 +38,17 @@ async def prueba_fechas_al_reves():
 
 
 asyncio.run(prueba_fechas_al_reves())
+
+
+async def prueba_busquedas_peligrosas():
+    async with Client(mcp) as client:
+        for nombre in ["", "   ", "a", "%", "%%", "_", "pe"]:
+            print(f"\n=== buscar_cliente({nombre!r}) ===")
+            try:
+                resultado = await client.call_tool("buscar_cliente", {"nombre": nombre})
+                print([c["nombre"] for c in resultado.data["clientes"]])
+            except Exception as e:
+                print("Rechazada:", str(e).splitlines()[-1])
+
+
+asyncio.run(prueba_busquedas_peligrosas())

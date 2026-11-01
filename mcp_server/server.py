@@ -26,6 +26,15 @@ def conectar():
     )
 
 
+def patron_nombre(nombre: str) -> str:
+    """Prepara el texto de busqueda para ILIKE de forma segura:
+    exige 2 o mas caracteres y escapa los comodines % y _."""
+    nombre = nombre.strip()
+    if len(nombre) < 2:
+        raise ValueError("Escribe al menos 2 letras del nombre")
+    escapado = nombre.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escapado}%"
+
 @mcp.tool
 def citas_del_dia(fecha: date) -> dict:
     """Devuelve las citas de la barbería para un día (formato AAAA-MM-DD):
@@ -70,7 +79,7 @@ def buscar_cliente(nombre: str) -> dict:
         LIMIT 10
     """
     with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
-        cur.execute(sql, (BARBERIA_ID, f"%{nombre}%"))
+        cur.execute(sql, (BARBERIA_ID, patron_nombre(nombre)))
         return {"busqueda": nombre, "clientes": cur.fetchall()}
 
 
@@ -97,7 +106,7 @@ def citas_de_cliente(nombre: str, solo_futuras: bool = True) -> dict:
         LIMIT 20
     """
     with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
-        cur.execute(sql, (BARBERIA_ID, f"%{nombre}%", solo_futuras))
+        cur.execute(sql, (BARBERIA_ID, patron_nombre(nombre), solo_futuras))
         return {"busqueda": nombre, "solo_futuras": solo_futuras, "citas": cur.fetchall()}
 
 
