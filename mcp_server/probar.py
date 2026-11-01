@@ -25,3 +25,16 @@ async def main():
 
 
 asyncio.run(main())
+
+
+async def prueba_fechas_al_reves():
+    async with Client(mcp) as client:
+        print("\n=== resumen_ventas(desde=2026-10-31, hasta=2026-10-01) ===")
+        try:
+            await client.call_tool("resumen_ventas", {"desde": "2026-10-31", "hasta": "2026-10-01"})
+            print("FALLO: deberia haber dado error")
+        except Exception as e:
+            print("OK, error esperado:", e)
+
+
+asyncio.run(prueba_fechas_al_reves())

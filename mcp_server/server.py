@@ -101,5 +101,28 @@ def citas_de_cliente(nombre: str, solo_futuras: bool = True) -> dict:
         return {"busqueda": nombre, "solo_futuras": solo_futuras, "citas": cur.fetchall()}
 
 
+@mcp.tool
+def resumen_ventas(desde: date, hasta: date) -> dict:
+    """Resumen de ventas de la barberia entre dos fechas, ambas incluidas
+    (formato AAAA-MM-DD): numero de ventas, total facturado y desglose por
+    metodo de pago. Los importes van en euros como texto con 2 decimales."""
+    if desde > hasta:
+        raise ValueError("'desde' no puede ser posterior a 'hasta'")
+    filtro = """
+        FROM ventas v
+        WHERE v.barberia_id = %s
+          AND (v.fecha AT TIME ZONE 'Europe/Madrid')::date BETWEEN %s AND %s
+    """
+    params = (BARBERIA_ID, desde, hasta)
+    with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute("SELECT count(*) AS num_ventas, coalesce(sum(v.importe), 0)::text AS total"
+                    + filtro, params)
+        totales = cur.fetchone()
+        cur.execute("SELECT v.metodo_pago, count(*) AS num_ventas, sum(v.importe)::text AS total"
+                    + filtro + " GROUP BY v.metodo_pago ORDER BY v.metodo_pago", params)
+        por_metodo = cur.fetchall()
+    return {"desde": str(desde), "hasta": str(hasta), **totales, "por_metodo_pago": por_metodo}
+
+
 if __name__ == "__main__":
     mcp.run()
