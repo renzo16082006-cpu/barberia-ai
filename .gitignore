@@ -13,3 +13,7 @@ venv/
 .vscode/
 .idea/
 Thumbs.db
+
+# Node / promptfoo
+node_modules/
+.promptfoo/
