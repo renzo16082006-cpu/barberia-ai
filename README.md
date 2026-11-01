@@ -11,7 +11,7 @@ Datos de prueba inventados. Proyecto de portfolio de **Renzo Povis** (DAM, Tarra
 
 - [x] **0. CRM base**: Postgres 18 + pgvector en Docker, permisos por negocio
 - [x] **1. Servidor MCP** con FastMCP 4 (Python): Claude consulta y gestiona el CRM
-- [ ] **2. RAG** con pgvector, sin framework, con citas y respuesta "no lo sé"
+- [x] **2. RAG** con pgvector, sin framework, con citas y respuesta "no lo sé"
 - [ ] **3. Evals** con promptfoo: modelo local (Ollama) vs Claude Haiku vs Opus
 - [ ] **4. Harness de agente propio**: bucle con tools, límite de pasos y confirmación antes de escribir
 - [ ] **5. Memoria del agente**: primero propia, luego mem0, vía MCP
@@ -69,7 +69,7 @@ Servidor [MCP](https://modelcontextprotocol.io) en Python con **FastMCP 4** y **
 Varias de estas mejoras salieron de pedirle a Claude que **probara y criticara** el servidor
 (formato de respuesta inconsistente, enumeración con `%`, búsquedas con tildes).
 
-## Proyecto 2: RAG con pgvector (en curso)
+## Proyecto 2: RAG con pgvector
 
 Para preguntas que no están en las tablas sino en **documentos** de la barbería
 (política de cancelación, horarios, cuidados después del corte...).
@@ -88,6 +88,17 @@ Para preguntas que no están en las tablas sino en **documentos** de la barberí
 - **Datos, no instrucciones**: el contenido de los documentos se trata como no fiable.
 - Los documentos de prueba de las dos barberías tienen reglas distintas **a propósito**
   (2 h frente a 24 h para cancelar) para comprobar que nunca se mezclan.
+
+### Capturas
+
+**Respuestas con cita y "no lo sé"**: anular el mismo día (2 h) y sábados por la tarde (cerrado):
+
+![Respuestas del RAG con citas](docs/capturas/04a-rag-respuestas.png)
+
+**Pregunta fuera de los documentos y varias tools a la vez**: tatuajes → "no lo sé"; Pedro → ficha + documentos + citas (volver hacia el 18/11):
+
+![Tatuajes y Pedro](docs/capturas/04b-rag-tatuajes-pedro.png)
+
 ## Cómo arrancarlo
 
 Requisitos: Docker, Python 3.13, [uv](https://docs.astral.sh/uv/) y [Ollama](https://ollama.com).
