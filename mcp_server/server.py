@@ -55,7 +55,7 @@ def citas_del_dia(fecha: date) -> dict:
     """Devuelve las citas de la barbería para un día (formato AAAA-MM-DD):
     hora, cliente, barbero, servicio y estado."""
     sql = """
-        SELECT to_char(c.inicio AT TIME ZONE 'Europe/Madrid', 'HH24:MI') AS hora,
+        SELECT c.id, to_char(c.inicio AT TIME ZONE 'Europe/Madrid', 'HH24:MI') AS hora,
                cl.nombre AS cliente,
                b.nombre  AS barbero,
                s.nombre  AS servicio,
@@ -104,7 +104,7 @@ def citas_de_cliente(nombre: str, solo_futuras: bool = True) -> dict:
     distinguir mayusculas). Por defecto solo las futuras; con
     solo_futuras=False devuelve tambien el historial. Maximo 20 citas."""
     sql = """
-        SELECT cl.nombre AS cliente,
+        SELECT c.id, cl.nombre AS cliente,
                to_char(c.inicio AT TIME ZONE 'Europe/Madrid', 'YYYY-MM-DD') AS fecha,
                to_char(c.inicio AT TIME ZONE 'Europe/Madrid', 'HH24:MI')    AS hora,
                b.nombre AS barbero,
@@ -211,6 +211,29 @@ def crear_cita(cliente: str, barbero: str, servicio: str, inicio: datetime) -> d
         "id": cita_id, "cliente": cli["nombre"], "barbero": bar["nombre"],
         "servicio": ser["nombre"], "inicio": inicio.strftime("%Y-%m-%d %H:%M"),
         "fin": fin.strftime("%H:%M"), "estado": "pendiente"}}
+
+@mcp.tool
+def cancelar_cita(cita_id: int) -> dict:
+    """ESCRIBE en la base de datos: cancela una cita. No la borra: la marca como
+    'cancelada' y libera el hueco. Usa el id que devuelven citas_del_dia o
+    citas_de_cliente, y confirma antes con el usuario que cita es.
+    Solo se pueden cancelar citas pendientes o confirmadas."""
+    with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute("""
+            UPDATE citas SET estado = 'cancelada'
+            WHERE id = %s AND barberia_id = %s AND estado IN ('pendiente', 'confirmada')
+            RETURNING id, to_char(inicio AT TIME ZONE 'Europe/Madrid', 'YYYY-MM-DD HH24:MI') AS inicio
+        """, (cita_id, BARBERIA_ID))
+        cita = cur.fetchone()
+        if cita is None:
+            cur.execute("SELECT estado FROM citas WHERE id = %s AND barberia_id = %s",
+                        (cita_id, BARBERIA_ID))
+            fila = cur.fetchone()
+            if fila is None:
+                raise ValueError(f"No existe la cita {cita_id}")
+            raise ValueError(f"La cita {cita_id} no se puede cancelar: esta '{fila['estado']}'")
+    return {"barberia": NOMBRE_BARBERIA, "cita_cancelada": {
+        "id": cita["id"], "inicio": cita["inicio"], "estado": "cancelada"}}
 
 if __name__ == "__main__":
     mcp.run()
