@@ -1,6 +1,7 @@
 ﻿"""Servidor MCP del CRM de la barbería (Proyecto 1)."""
 import os
-from datetime import date
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import psycopg
 from psycopg.rows import dict_row
@@ -11,6 +12,7 @@ load_dotenv()
 
 # Opción B: la barbería la fija el servidor (.env), NUNCA la IA.
 BARBERIA_ID = int(os.environ["BARBERIA_ID"])
+MADRID = ZoneInfo("Europe/Madrid")
 
 mcp = FastMCP("Barbería IA")
 
@@ -86,7 +88,7 @@ def buscar_cliente(nombre: str) -> dict:
         FROM clientes cl
         LEFT JOIN citas c ON c.cliente_id = cl.id AND c.barberia_id = cl.barberia_id
         WHERE cl.barberia_id = %s
-          AND cl.nombre ILIKE %s
+          AND unaccent(cl.nombre) ILIKE unaccent(%s)
         GROUP BY cl.id
         ORDER BY cl.nombre
         LIMIT 10
@@ -113,7 +115,7 @@ def citas_de_cliente(nombre: str, solo_futuras: bool = True) -> dict:
         JOIN barberos  b  ON b.id  = c.barbero_id
         JOIN servicios s  ON s.id  = c.servicio_id
         WHERE c.barberia_id = %s
-          AND cl.nombre ILIKE %s
+          AND unaccent(cl.nombre) ILIKE unaccent(%s)
           AND (NOT %s OR c.inicio >= now())
         ORDER BY c.inicio
         LIMIT 20
@@ -145,6 +147,70 @@ def resumen_ventas(desde: date, hasta: date) -> dict:
         por_metodo = cur.fetchall()
     return {"barberia": NOMBRE_BARBERIA, "desde": str(desde), "hasta": str(hasta), **totales, "por_metodo_pago": por_metodo}
 
+
+def buscar_uno(cur, sql: str, nombre: str) -> dict:
+    """Busca por nombre en esta barberia y exige UN solo resultado."""
+    cur.execute(sql, (BARBERIA_ID, patron_nombre(nombre)))
+    filas = cur.fetchall()
+    if not filas:
+        raise ValueError(f"No encuentro nada que coincida con '{nombre}'")
+    if len(filas) > 1:
+        opciones = ", ".join(f["nombre"] for f in filas)
+        raise ValueError(f"'{nombre}' coincide con varios: {opciones}. Di cual exactamente.")
+    return filas[0]
+
+
+@mcp.tool
+def crear_cita(cliente: str, barbero: str, servicio: str, inicio: datetime) -> dict:
+    """ESCRIBE en la base de datos: crea una cita en estado 'pendiente'.
+    Antes de llamarla, confirma con el usuario cliente, barbero, servicio, dia y hora.
+    cliente, barbero y servicio: nombre o parte del nombre (debe coincidir con uno solo).
+    inicio: fecha y hora en hora de Espana, formato AAAA-MM-DDTHH:MM.
+    Rechaza fechas pasadas, barberos o servicios inactivos y solapes con otra cita del barbero."""
+    if inicio.tzinfo is None:
+        inicio = inicio.replace(tzinfo=MADRID)
+    if inicio <= datetime.now(MADRID):
+        raise ValueError("La cita tiene que ser en el futuro")
+
+    with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cli = buscar_uno(cur, "SELECT id, nombre FROM clientes "
+                              "WHERE barberia_id = %s AND unaccent(nombre) ILIKE unaccent(%s)", cliente)
+        bar = buscar_uno(cur, "SELECT id, nombre FROM barberos "
+                              "WHERE barberia_id = %s AND activo AND unaccent(nombre) ILIKE unaccent(%s)", barbero)
+        ser = buscar_uno(cur, "SELECT id, nombre, duracion_min FROM servicios "
+                              "WHERE barberia_id = %s AND activo AND unaccent(nombre) ILIKE unaccent(%s)", servicio)
+
+        # Bloquea al barbero: si llegan dos reservas a la vez, la segunda espera a la primera.
+        cur.execute("SELECT id FROM barberos WHERE id = %s FOR UPDATE", (bar["id"],))
+
+        fin = inicio + timedelta(minutes=ser["duracion_min"])
+        cur.execute("""
+            SELECT to_char(c.inicio AT TIME ZONE 'Europe/Madrid', 'YYYY-MM-DD HH24:MI') AS inicio,
+                   s.nombre AS servicio
+            FROM citas c
+            JOIN servicios s ON s.id = c.servicio_id
+            WHERE c.barberia_id = %s
+              AND c.barbero_id = %s
+              AND c.estado <> 'cancelada'
+              AND c.inicio < %s
+              AND c.inicio + make_interval(mins => s.duracion_min) > %s
+        """, (BARBERIA_ID, bar["id"], fin, inicio))
+        choque = cur.fetchone()
+        if choque:
+            raise ValueError(f"{bar['nombre']} ya tiene una cita a esa hora: "
+                             f"{choque['servicio']} el {choque['inicio']}")
+
+        cur.execute("""
+            INSERT INTO citas (barberia_id, cliente_id, barbero_id, servicio_id, inicio)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id
+        """, (BARBERIA_ID, cli["id"], bar["id"], ser["id"], inicio))
+        cita_id = cur.fetchone()["id"]
+
+    return {"barberia": NOMBRE_BARBERIA, "cita_creada": {
+        "id": cita_id, "cliente": cli["nombre"], "barbero": bar["nombre"],
+        "servicio": ser["nombre"], "inicio": inicio.strftime("%Y-%m-%d %H:%M"),
+        "fin": fin.strftime("%H:%M"), "estado": "pendiente"}}
 
 if __name__ == "__main__":
     mcp.run()

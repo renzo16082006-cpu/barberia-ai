@@ -52,3 +52,13 @@ async def prueba_busquedas_peligrosas():
 
 
 asyncio.run(prueba_busquedas_peligrosas())
+
+
+async def prueba_tildes():
+    async with Client(mcp) as client:
+        for nombre in ["Gómez", "gomez", "LUÍS"]:
+            resultado = await client.call_tool("buscar_cliente", {"nombre": nombre})
+            print(f"buscar_cliente({nombre!r}) ->", [c["nombre"] for c in resultado.data["clientes"]])
+
+
+asyncio.run(prueba_tildes())
