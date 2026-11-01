@@ -240,7 +240,7 @@ def cancelar_cita(cita_id: int) -> dict:
 # --- RAG ---------------------------------------------------------------
 MODELO_EMBEDDINGS = "bge-m3"
 OLLAMA_URL = "http://localhost:11434/api/embed"
-UMBRAL_SIMILITUD = 0.5   # se ajustara midiendo preguntas reales
+UMBRAL_SIMILITUD = 0.55  # medido con rag/medir.py: SI 0.616-0.666, NO 0.300-0.475
 
 
 def embedding(texto: str) -> str:
