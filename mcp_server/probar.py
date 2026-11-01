@@ -11,11 +11,16 @@ async def main():
     async with Client(mcp) as client:
         print("=== Tools disponibles ===")
         for tool in await client.list_tools():
-            print(f"- {tool.name}: {tool.description}")
+            print(f"- {tool.name}")
 
         for fecha in ["2026-11-03", "2026-10-30", "2026-12-25"]:
             print(f"\n=== citas_del_dia({fecha}) ===")
             resultado = await client.call_tool("citas_del_dia", {"fecha": fecha})
+            pprint(resultado.data)
+
+        for nombre in ["pedro", "GOMEZ", "sergi", "'; DROP TABLE clientes; --"]:
+            print(f"\n=== buscar_cliente({nombre!r}) ===")
+            resultado = await client.call_tool("buscar_cliente", {"nombre": nombre})
             pprint(resultado.data)
 
 

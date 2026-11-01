@@ -49,5 +49,30 @@ def citas_del_dia(fecha: date) -> list[dict]:
         return cur.fetchall()
 
 
+@mcp.tool
+def buscar_cliente(nombre: str) -> list[dict]:
+    """Busca clientes de la barbería por nombre o parte del nombre (sin
+    distinguir mayúsculas). Devuelve nombre, teléfono, notas, número de
+    citas y fecha de la última visita completada."""
+    sql = """
+        SELECT cl.nombre,
+               cl.telefono,
+               cl.notas,
+               count(c.id) AS num_citas,
+               to_char((max(c.inicio) FILTER (WHERE c.estado = 'completada'))
+                       AT TIME ZONE 'Europe/Madrid', 'YYYY-MM-DD') AS ultima_visita
+        FROM clientes cl
+        LEFT JOIN citas c ON c.cliente_id = cl.id AND c.barberia_id = cl.barberia_id
+        WHERE cl.barberia_id = %s
+          AND cl.nombre ILIKE %s
+        GROUP BY cl.id
+        ORDER BY cl.nombre
+        LIMIT 10
+    """
+    with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(sql, (BARBERIA_ID, f"%{nombre}%"))
+        return cur.fetchall()
+
+
 if __name__ == "__main__":
     mcp.run()
