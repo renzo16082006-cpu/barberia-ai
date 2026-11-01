@@ -3,21 +3,21 @@ services:
     image: pgvector/pgvector:pg18-trixie
     container_name: barberia-db
     environment:
-      POSTGRES_USER: barberia
-      POSTGRES_PASSWORD: barberia
-      POSTGRES_DB: barberia
+      POSTGRES_USER: ${POSTGRES_USER}           # CAMBIO
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}   # CAMBIO
+      POSTGRES_DB: ${POSTGRES_DB}               # CAMBIO
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"                   # CAMBIO
     volumes:
       - barberia_data:/var/lib/postgresql
 
-  adminer:                         # NUEVO
-    image: adminer                 # NUEVO
-    container_name: barberia-adminer   # NUEVO
-    ports:                         # NUEVO
-      - "8080:8080"                # NUEVO
-    depends_on:                    # NUEVO
-      - db                         # NUEVO
+  adminer:
+    image: adminer
+    container_name: barberia-adminer
+    ports:
+      - "127.0.0.1:8080:8080"                   # CAMBIO
+    depends_on:
+      - db
 
 volumes:
   barberia_data:

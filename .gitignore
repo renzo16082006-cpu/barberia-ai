@@ -1,0 +1,15 @@
+# Secretos: NUNCA subir a Git
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editores y sistema
+.vscode/
+.idea/
+Thumbs.db
