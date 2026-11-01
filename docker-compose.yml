@@ -1,0 +1,23 @@
+services:
+  db:
+    image: pgvector/pgvector:pg18-trixie
+    container_name: barberia-db
+    environment:
+      POSTGRES_USER: barberia
+      POSTGRES_PASSWORD: barberia
+      POSTGRES_DB: barberia
+    ports:
+      - "5432:5432"
+    volumes:
+      - barberia_data:/var/lib/postgresql
+
+  adminer:                         # NUEVO
+    image: adminer                 # NUEVO
+    container_name: barberia-adminer   # NUEVO
+    ports:                         # NUEVO
+      - "8080:8080"                # NUEVO
+    depends_on:                    # NUEVO
+      - db                         # NUEVO
+
+volumes:
+  barberia_data:
