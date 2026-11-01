@@ -35,6 +35,19 @@ def patron_nombre(nombre: str) -> str:
     escapado = nombre.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     return f"%{escapado}%"
 
+def cargar_nombre_barberia() -> str:
+    """Lee el nombre de la barberia configurada. Si BARBERIA_ID no existe,
+    el servidor no arranca: mejor fallar al inicio que dar datos raros."""
+    with conectar() as conn, conn.cursor() as cur:
+        cur.execute("SELECT nombre FROM barberias WHERE id = %s", (BARBERIA_ID,))
+        fila = cur.fetchone()
+    if fila is None:
+        raise RuntimeError(f"No existe ninguna barberia con id {BARBERIA_ID}")
+    return fila[0]
+
+
+NOMBRE_BARBERIA = cargar_nombre_barberia()
+
 @mcp.tool
 def citas_del_dia(fecha: date) -> dict:
     """Devuelve las citas de la barbería para un día (formato AAAA-MM-DD):
@@ -55,7 +68,7 @@ def citas_del_dia(fecha: date) -> dict:
     """
     with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute(sql, (BARBERIA_ID, fecha))
-        return {"fecha": str(fecha), "citas": cur.fetchall()}
+        return {"barberia": NOMBRE_BARBERIA, "fecha": str(fecha), "citas": cur.fetchall()}
 
 
 @mcp.tool
@@ -80,7 +93,7 @@ def buscar_cliente(nombre: str) -> dict:
     """
     with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute(sql, (BARBERIA_ID, patron_nombre(nombre)))
-        return {"busqueda": nombre, "clientes": cur.fetchall()}
+        return {"barberia": NOMBRE_BARBERIA, "busqueda": nombre, "clientes": cur.fetchall()}
 
 
 @mcp.tool
@@ -107,7 +120,7 @@ def citas_de_cliente(nombre: str, solo_futuras: bool = True) -> dict:
     """
     with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute(sql, (BARBERIA_ID, patron_nombre(nombre), solo_futuras))
-        return {"busqueda": nombre, "solo_futuras": solo_futuras, "citas": cur.fetchall()}
+        return {"barberia": NOMBRE_BARBERIA, "busqueda": nombre, "solo_futuras": solo_futuras, "citas": cur.fetchall()}
 
 
 @mcp.tool
@@ -130,7 +143,7 @@ def resumen_ventas(desde: date, hasta: date) -> dict:
         cur.execute("SELECT v.metodo_pago, count(*) AS num_ventas, sum(v.importe)::text AS total"
                     + filtro + " GROUP BY v.metodo_pago ORDER BY v.metodo_pago", params)
         por_metodo = cur.fetchall()
-    return {"desde": str(desde), "hasta": str(hasta), **totales, "por_metodo_pago": por_metodo}
+    return {"barberia": NOMBRE_BARBERIA, "desde": str(desde), "hasta": str(hasta), **totales, "por_metodo_pago": por_metodo}
 
 
 if __name__ == "__main__":
