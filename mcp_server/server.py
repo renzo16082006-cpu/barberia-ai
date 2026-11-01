@@ -27,7 +27,7 @@ def conectar():
 
 
 @mcp.tool
-def citas_del_dia(fecha: date) -> list[dict]:
+def citas_del_dia(fecha: date) -> dict:
     """Devuelve las citas de la barbería para un día (formato AAAA-MM-DD):
     hora, cliente, barbero, servicio y estado."""
     sql = """
@@ -46,11 +46,11 @@ def citas_del_dia(fecha: date) -> list[dict]:
     """
     with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute(sql, (BARBERIA_ID, fecha))
-        return cur.fetchall()
+        return {"fecha": str(fecha), "citas": cur.fetchall()}
 
 
 @mcp.tool
-def buscar_cliente(nombre: str) -> list[dict]:
+def buscar_cliente(nombre: str) -> dict:
     """Busca clientes de la barbería por nombre o parte del nombre (sin
     distinguir mayúsculas). Devuelve nombre, teléfono, notas, número de
     citas y fecha de la última visita completada."""
@@ -71,7 +71,34 @@ def buscar_cliente(nombre: str) -> list[dict]:
     """
     with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute(sql, (BARBERIA_ID, f"%{nombre}%"))
-        return cur.fetchall()
+        return {"busqueda": nombre, "clientes": cur.fetchall()}
+
+
+@mcp.tool
+def citas_de_cliente(nombre: str, solo_futuras: bool = True) -> dict:
+    """Busca las citas de un cliente por nombre o parte del nombre (sin
+    distinguir mayusculas). Por defecto solo las futuras; con
+    solo_futuras=False devuelve tambien el historial. Maximo 20 citas."""
+    sql = """
+        SELECT cl.nombre AS cliente,
+               to_char(c.inicio AT TIME ZONE 'Europe/Madrid', 'YYYY-MM-DD') AS fecha,
+               to_char(c.inicio AT TIME ZONE 'Europe/Madrid', 'HH24:MI')    AS hora,
+               b.nombre AS barbero,
+               s.nombre AS servicio,
+               c.estado
+        FROM citas c
+        JOIN clientes  cl ON cl.id = c.cliente_id
+        JOIN barberos  b  ON b.id  = c.barbero_id
+        JOIN servicios s  ON s.id  = c.servicio_id
+        WHERE c.barberia_id = %s
+          AND cl.nombre ILIKE %s
+          AND (NOT %s OR c.inicio >= now())
+        ORDER BY c.inicio
+        LIMIT 20
+    """
+    with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(sql, (BARBERIA_ID, f"%{nombre}%", solo_futuras))
+        return {"busqueda": nombre, "solo_futuras": solo_futuras, "citas": cur.fetchall()}
 
 
 if __name__ == "__main__":
