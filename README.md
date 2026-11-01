@@ -69,9 +69,28 @@ Servidor [MCP](https://modelcontextprotocol.io) en Python con **FastMCP 4** y **
 Varias de estas mejoras salieron de pedirle a Claude que **probara y criticara** el servidor
 (formato de respuesta inconsistente, enumeración con `%`, búsquedas con tildes).
 
+## Proyecto 2: RAG con pgvector (en curso)
+
+Para preguntas que no están en las tablas sino en **documentos** de la barbería
+(política de cancelación, horarios, cuidados después del corte...).
+
+> **Cliente:** ¿Puedo anular mi reserva el mismo día?
+> **Claude** *(llama a `consultar_documentos`)*: Sí, sin coste hasta 2 horas antes
+> [politica_cancelacion.md > Plazos].
+
+- **Sin framework**: troceado por secciones (`rag/trocear.py`), embeddings con **bge-m3** en local
+  vía **Ollama** (los documentos no salen del PC) y búsqueda por similitud coseno con **pgvector**.
+- **Permisos en el SQL**: cada trozo lleva `barberia_id` (con clave foránea compuesta) y la búsqueda
+  filtra `WHERE barberia_id = ...`. Los documentos de otra barbería ni siquiera se comparan.
+- **Citas y "no lo sé"**: cada fragmento devuelve su fuente y sección; si ninguno supera un umbral
+  de similitud, la tool indica que no hay información. El umbral se elige **midiendo** preguntas
+  con respuesta conocida (`rag/medir.py`), no a ojo.
+- **Datos, no instrucciones**: el contenido de los documentos se trata como no fiable.
+- Los documentos de prueba de las dos barberías tienen reglas distintas **a propósito**
+  (2 h frente a 24 h para cancelar) para comprobar que nunca se mezclan.
 ## Cómo arrancarlo
 
-Requisitos: Docker, Python 3.13 y [uv](https://docs.astral.sh/uv/).
+Requisitos: Docker, Python 3.13, [uv](https://docs.astral.sh/uv/) y [Ollama](https://ollama.com).
 
 ```powershell
 git clone https://github.com/renzo16082006-cpu/barberia-ai.git
@@ -80,6 +99,8 @@ Copy-Item .env.example .env      # y cambia POSTGRES_PASSWORD
 docker compose up -d
 Get-ChildItem db\*.sql | ForEach-Object { Get-Content $_ | docker exec -i barberia-db psql -U barberia -v ON_ERROR_STOP=1 }
 uv sync
+ollama pull bge-m3
+uv run python rag\cargar.py
 uv run python mcp_server\probar.py
 ```
 
