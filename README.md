@@ -38,6 +38,22 @@ Servidor [MCP](https://modelcontextprotocol.io) en Python con **FastMCP 4** y **
 | `crear_cita(cliente, barbero, servicio, inicio)` | **Escritura** | Crea una cita pendiente |
 | `cancelar_cita(cita_id)` | **Escritura** | Cancela sin borrar (queda el historial) |
 
+### Capturas
+
+**Claude usa el servidor y razona con los datos** (detecta una posible cita duplicada):
+
+![Solicitud y respuesta del servidor](docs/capturas/01a-citas-pedro-json.png)
+![Respuesta de Claude](docs/capturas/01b-citas-pedro-respuesta.png)
+
+**Intento de suplantación**: Claude intenta volcar todos los clientes y el servidor lo bloquea:
+
+![Intento bloqueado por el servidor](docs/capturas/02a-suplantacion-intento.png)
+![Respuesta de Claude](docs/capturas/02b-suplantacion-respuesta.png)
+
+**Validaciones al escribir**: solape de horario y fecha pasada:
+
+![Errores de validación](docs/capturas/03a-validaciones-errores.png)
+![Respuesta de Claude](docs/capturas/03b-validaciones-respuesta.png)
 ### Decisiones de seguridad
 
 - **La IA no elige la barbería.** `BARBERIA_ID` se fija en el servidor (`.env`); ninguna tool
