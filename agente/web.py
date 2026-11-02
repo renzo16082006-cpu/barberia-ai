@@ -29,6 +29,7 @@ from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
 from harness import MODELO, NOMBRE_BARBERIA, Agente, Client, mcp
+from server import BARBERIA_ID, conectar  # noqa: E402 (harness ya añadió mcp_server al path)
 
 HOST, PUERTO = "127.0.0.1", 8000
 ORIGENES = {f"http://{HOST}:{PUERTO}", f"http://localhost:{PUERTO}"}
@@ -100,6 +101,24 @@ async def info(request: Request):
     return JSONResponse({"barberia": NOMBRE_BARBERIA, "modelo": MODELO})
 
 
+def leer_horario() -> dict:
+    """Horario de ESTA barberia (tabla horarios). Dias ISO: 1 = lunes ... 7 = domingo; sin fila = cerrado.
+    Ejemplo: {"1": ["10:00", "20:00"], "6": ["09:00", "14:00"]}"""
+    with conectar() as conn, conn.cursor() as cur:
+        cur.execute("SELECT dia_semana, abre, cierra FROM horarios WHERE barberia_id = %s ORDER BY dia_semana",
+                    (BARBERIA_ID,))
+        return {str(dia): [f"{abre:%H:%M}", f"{cierra:%H:%M}"] for dia, abre, cierra in cur.fetchall()}
+
+
+async def horario(request: Request):
+    # Una sola fuente de verdad: la misma tabla que usan huecos_libres y crear_cita.
+    try:
+        return JSONResponse({"horario": await asyncio.to_thread(leer_horario)})
+    except Exception as e:  # el detalle a la terminal, no al navegador
+        print("ERROR:", repr(e))
+        return error("No se ha podido leer el horario.", 500)
+
+
 async def chat(request: Request):
     agente = agente_de(request)
     if agente is None:
@@ -136,6 +155,7 @@ app = Starlette(
         Route("/", portada),
         Route("/panel", panel),
         Route("/api/info", info),
+        Route("/api/horario", horario),
         Route("/api/{rol}/chat", chat, methods=["POST"]),
         Route("/api/{rol}/confirmar", confirmar, methods=["POST"]),
         Route("/api/{rol}/reiniciar", reiniciar, methods=["POST"]),
