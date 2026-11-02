@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Barbería IA · Asistente</title>
+  <link rel="stylesheet" href="/static/estilos.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <div class="poste" aria-hidden="true"></div>
+  <main class="app">
+    <header class="cabecera">
+      <div>
+        <p class="sobre">Asistente interno</p>
+        <h1 id="barberia">Barbería</h1>
+      </div>
+      <div class="acciones">
+        <span class="modelo" id="modelo" title="Modelo local en Ollama"></span>
+        <button type="button" id="reiniciar" class="secundario">Nueva conversación</button>
+      </div>
+    </header>
+
+    <section id="chat" class="chat" aria-live="polite">
+      <div class="bienvenida">
+        <p>Pregunta por la agenda, los clientes, las ventas o las normas de la barbería.</p>
+        <div class="sugerencias">
+          <button type="button" class="chip">¿Qué citas hay mañana?</button>
+          <button type="button" class="chip">¿Cuánto facturamos en octubre?</button>
+          <button type="button" class="chip">¿Abrís los sábados por la tarde?</button>
+          <button type="button" class="chip">¿Qué citas pendientes tiene Pedro?</button>
+        </div>
+      </div>
+    </section>
+
+    <p id="pensando" class="pensando" hidden>El asistente está pensando…</p>
+
+    <form id="formulario" class="formulario" autocomplete="off">
+      <input id="entrada" type="text" maxlength="1000" placeholder="Escribe tu pregunta…" aria-label="Mensaje" required>
+      <button id="enviar" type="submit">Enviar</button>
+    </form>
+    <p class="pie">Todo se ejecuta en local · las acciones que modifican datos piden confirmación</p>
+  </main>
+</body>
+</html>

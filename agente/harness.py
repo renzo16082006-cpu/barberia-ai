@@ -106,12 +106,16 @@ class Agente:
         if not self.pendiente:
             return self._respuesta("No hay ninguna acción pendiente.")
         llamada, self.pendiente = self.pendiente, None
-        if si:
-            resultado = await self._ejecutar(llamada)
-        else:
-            resultado = {"error": "El usuario ha respondido NO: la acción se ha cancelado y no se ha cambiado nada. Díselo en una frase y no vuelvas a intentarlo salvo que te lo pida."}
+        if not si:
+            # Ante un "no", responde el CÓDIGO (siempre igual) y se descarta el resto del turno:
+            # el modelo no improvisa ni vuelve a insistir.
             self.traza.append(f"✋ {llamada['function']['name']} rechazada por el usuario")
-        self._guardar_resultado(llamada, resultado)
+            self._guardar_resultado(llamada, {"error": "El usuario ha respondido NO. No se ha ejecutado."})
+            self.cola = []
+            texto = "De acuerdo, no lo hago. No se ha cambiado nada."
+            self.mensajes.append({"role": "assistant", "content": texto})
+            return self._respuesta(texto)
+        self._guardar_resultado(llamada, await self._ejecutar(llamada))
         return await self._bucle()
 
     async def _bucle(self) -> dict:
