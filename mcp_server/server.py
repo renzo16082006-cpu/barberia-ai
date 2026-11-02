@@ -162,13 +162,89 @@ def buscar_uno(cur, sql: str, nombre: str) -> dict:
     return filas[0]
 
 
+def horario_del_dia(cur, dia: date):
+    """Devuelve (abre, cierra) de ESTA barberia ese dia, como fecha y hora de Madrid,
+    o None si ese dia esta cerrada. Ejemplo: sabado -> (09:00, 14:00) en El Navajas."""
+    cur.execute("SELECT abre, cierra FROM horarios WHERE barberia_id = %s AND dia_semana = %s",
+                (BARBERIA_ID, dia.isoweekday()))  # isoweekday: 1 = lunes ... 7 = domingo
+    fila = cur.fetchone()
+    if fila is None:
+        return None
+    return datetime.combine(dia, fila["abre"], MADRID), datetime.combine(dia, fila["cierra"], MADRID)
+
+
+PASO_HUECOS = 30  # minutos entre una hora propuesta y la siguiente
+
+
+@mcp.tool
+def huecos_libres(fecha: date, servicio: str, barbero: str | None = None) -> dict:
+    """SOLO LEE (no reserva nada): a que horas se puede empezar un servicio un dia
+    (formato AAAA-MM-DD), por barbero, de 30 en 30 minutos.
+    Tiene en cuenta el horario de apertura y las citas ya reservadas (no canceladas).
+    servicio: nombre o parte del nombre. barbero: opcional; si no se indica, todos los activos."""
+    ahora = datetime.now(MADRID)
+    if fecha < ahora.date():
+        raise ValueError("Esa fecha ya ha pasado")
+    if fecha > ahora.date() + timedelta(days=90):
+        raise ValueError("Solo se pueden consultar los proximos 90 dias")
+
+    with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
+        ser = buscar_uno(cur, "SELECT id, nombre, duracion_min FROM servicios "
+                              "WHERE barberia_id = %s AND activo AND unaccent(nombre) ILIKE unaccent(%s)", servicio)
+        if barbero:
+            barberos = [buscar_uno(cur, "SELECT id, nombre FROM barberos "
+                                        "WHERE barberia_id = %s AND activo AND unaccent(nombre) ILIKE unaccent(%s)", barbero)]
+        else:
+            cur.execute("SELECT id, nombre FROM barberos WHERE barberia_id = %s AND activo ORDER BY nombre",
+                        (BARBERIA_ID,))
+            barberos = cur.fetchall()
+
+        horario = horario_del_dia(cur, fecha)
+        if horario is None:
+            return {"barberia": NOMBRE_BARBERIA, "fecha": str(fecha), "cerrado": True,
+                    "aviso": "La barberia esta cerrada ese dia.", "huecos": {}}
+        abre, cierra = horario
+
+        # Citas que ocupan algo de ese horario (las canceladas no ocupan).
+        cur.execute("""
+            SELECT c.barbero_id, c.inicio, c.inicio + make_interval(mins => s.duracion_min) AS fin
+            FROM citas c
+            JOIN servicios s ON s.id = c.servicio_id
+            WHERE c.barberia_id = %s
+              AND c.estado <> 'cancelada'
+              AND c.inicio < %s
+              AND c.inicio + make_interval(mins => s.duracion_min) > %s
+        """, (BARBERIA_ID, cierra, abre))
+        ocupadas = cur.fetchall()
+
+    # Las horas las calcula el CODIGO (el modelo solo las lee): de 30 en 30 desde que abre,
+    # sin pasarse del cierre, sin horas ya pasadas y sin solaparse con citas del barbero.
+    duracion = timedelta(minutes=ser["duracion_min"])
+    huecos = {}
+    for bar in barberos:
+        suyas = [c for c in ocupadas if c["barbero_id"] == bar["id"]]
+        horas = []
+        t = abre
+        while t + duracion <= cierra:
+            libre = all(t >= c["fin"] or t + duracion <= c["inicio"] for c in suyas)
+            if t > ahora and libre:
+                horas.append(t.strftime("%H:%M"))
+            t += timedelta(minutes=PASO_HUECOS)
+        huecos[bar["nombre"]] = horas
+
+    return {"barberia": NOMBRE_BARBERIA, "fecha": str(fecha), "servicio": ser["nombre"],
+            "duracion_min": ser["duracion_min"], "horario": f"{abre:%H:%M}-{cierra:%H:%M}",
+            "huecos": huecos}
+
+
 @mcp.tool
 def crear_cita(cliente: str, barbero: str, servicio: str, inicio: datetime) -> dict:
     """ESCRIBE en la base de datos: crea una cita en estado 'pendiente'.
     Antes de llamarla, confirma con el usuario cliente, barbero, servicio, dia y hora.
     cliente, barbero y servicio: nombre o parte del nombre (debe coincidir con uno solo).
     inicio: fecha y hora en hora de Espana, formato AAAA-MM-DDTHH:MM.
-    Rechaza fechas pasadas, barberos o servicios inactivos y solapes con otra cita del barbero."""
+    Rechaza fechas pasadas, fuera del horario de apertura, barberos o servicios inactivos
+    y solapes con otra cita del barbero."""
     if inicio.tzinfo is None:
         inicio = inicio.replace(tzinfo=MADRID)
     if inicio <= datetime.now(MADRID):
@@ -182,10 +258,17 @@ def crear_cita(cliente: str, barbero: str, servicio: str, inicio: datetime) -> d
         ser = buscar_uno(cur, "SELECT id, nombre, duracion_min FROM servicios "
                               "WHERE barberia_id = %s AND activo AND unaccent(nombre) ILIKE unaccent(%s)", servicio)
 
+        fin = inicio + timedelta(minutes=ser["duracion_min"])
+        horario = horario_del_dia(cur, inicio.astimezone(MADRID).date())
+        if horario is None:
+            raise ValueError(f"{NOMBRE_BARBERIA} esta cerrada ese dia")
+        if inicio < horario[0] or fin > horario[1]:
+            raise ValueError(f"Fuera de horario: ese dia se abre de {horario[0]:%H:%M} a {horario[1]:%H:%M} "
+                             f"y {ser['nombre']} dura {ser['duracion_min']} min")
+
         # Bloquea al barbero: si llegan dos reservas a la vez, la segunda espera a la primera.
         cur.execute("SELECT id FROM barberos WHERE id = %s FOR UPDATE", (bar["id"],))
 
-        fin = inicio + timedelta(minutes=ser["duracion_min"])
         cur.execute("""
             SELECT to_char(c.inicio AT TIME ZONE 'Europe/Madrid', 'YYYY-MM-DD HH24:MI') AS inicio,
                    s.nombre AS servicio
