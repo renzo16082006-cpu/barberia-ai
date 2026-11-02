@@ -159,7 +159,8 @@ class Agente:
             while self.cola:
                 llamada = self.cola.pop(0)
                 nombre = llamada["function"]["name"]
-                if nombre in ESCRITURA:
+                # Solo se pide confirmación si el rol TIENE esa tool; si no, _ejecutar la bloquea (⛔).
+                if nombre in ESCRITURA and nombre in self.nombres:
                     self.pendiente = llamada
                     return {
                         "tipo": "confirmar",
@@ -181,7 +182,8 @@ class Agente:
             )
             if not msg.get("tool_calls"):
                 texto = msg.get("content", "")
-                if ROLES[self.rol]["exige_documentos"] and not self.traza:
+                # Cuenta solo tools EJECUTADAS (🔧): un intento bloqueado (⛔) no es haber mirado los documentos.
+                if ROLES[self.rol]["exige_documentos"] and not any(t.startswith("🔧") for t in self.traza):
                     texto = FUERA_DE_TEMA
                     self.mensajes[-1]["content"] = texto  # el historial guarda lo que de verdad se mostró
                 return self._respuesta(texto)
