@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>El Navajas · Barbería en la Calle Mayor 12, Tarragona</title>
+  <link rel="preload" href="/static/fonts/bodoni-moda.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/jost.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/estilos.css">
+  <link rel="stylesheet" href="/static/barberia.css">
+  <script src="/static/web.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body class="web" data-rol="cliente">
+  <!-- Dibujos reutilizables (navaja, brocha, tijeras, poste): un solo lenguaje plano en los colores de la página -->
+  <svg width="0" height="0" class="oculto" aria-hidden="true">
+    <defs>
+      <pattern id="baldosa" width="160" height="160" patternUnits="userSpaceOnUse">
+        <rect width="160" height="160" fill="#2f4321"/>
+        <path d="M0 0h80A80 80 0 0 1 0 80zM160 0v80A80 80 0 0 1 80 0zM160 160H80a80 80 0 0 1 80-80zM0 160V80a80 80 0 0 1 80 80z" fill="#354b26"/>
+        <path d="M80 30 130 80 80 130 30 80z" fill="#2a3c1e"/>
+        <circle cx="80" cy="80" r="18" fill="#4a5f37"/>
+        <circle cx="80" cy="80" r="8" fill="#2f4321"/>
+        <path d="M0 0h16L0 16zM160 0v16L144 0zM160 160h-16l16-16zM0 160v-16l16 16z" fill="#4a5f37"/>
+      </pattern>
+      <symbol id="navaja" viewBox="0 0 420 120">
+        <path d="M22 70c40-4 170-10 238-8 8 0 12 4 12 10v6c0 6-4 10-12 10-80 2-190-2-232-6-10-1-14-12-6-12z" fill="#2a2a26"/>
+        <circle cx="262" cy="74" r="7" fill="#c9bfa6"/>
+        <path d="M262 66 404 22c8-2 12 4 8 10l-34 46c-4 5-9 8-16 8H270z" fill="#e8e2d4"/>
+        <path d="M270 86h92c7 0 12-3 16-8l34-46c2-3 2-6 0-8L270 74z" fill="#b9b2a2"/>
+      </symbol>
+      <symbol id="emblema-svg" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="78" fill="#1f1f1c"/>
+        <circle cx="80" cy="80" r="70" fill="none" stroke="#e3d3a8" stroke-width="1.5"/>
+        <circle cx="80" cy="80" r="46" fill="none" stroke="#e3d3a8" stroke-width="1"/>
+        <path id="arco-sup" d="M24 80a56 56 0 0 1 112 0" fill="none"/>
+        <path id="arco-inf" d="M28 80a52 52 0 0 0 104 0" fill="none"/>
+        <text font-family="Jost, sans-serif" font-size="15" font-weight="500" letter-spacing="4" fill="#e3d3a8" text-anchor="middle"><textPath href="#arco-sup" startOffset="50%">EL NAVAJAS</textPath></text>
+        <text font-family="Jost, sans-serif" font-size="11" letter-spacing="3" fill="#e3d3a8" text-anchor="middle"><textPath href="#arco-inf" startOffset="50%" side="right">TARRAGONA</textPath></text>
+        <circle cx="30" cy="80" r="2.5" fill="#9b2b25"/><circle cx="130" cy="80" r="2.5" fill="#9b2b25"/>
+        <g transform="translate(80 80) rotate(-35)">
+          <rect x="-4" y="-34" width="8" height="40" rx="2" fill="#e3d3a8"/>
+          <path d="M-4 6h8l-1 28h-6z" fill="#9b2b25"/>
+        </g>
+        <g transform="translate(80 80) rotate(35)">
+          <path d="M-5 -34h10v34h-10z" fill="#f3eee3"/>
+          <path d="M-5 0h10l-2 34h-6z" fill="#3f5a2a"/>
+        </g>
+        <circle cx="80" cy="80" r="5" fill="#1f1f1c" stroke="#e3d3a8" stroke-width="1.5"/>
+      </symbol>
+      <symbol id="i-reloj" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+      <symbol id="i-lugar" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="9.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+      <symbol id="i-pago" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M7 15h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+      <symbol id="i-cancelar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 9h16M9 3v4M15 3v4M10 13l4 4M14 13l-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+      <symbol id="brocha" viewBox="0 0 120 260">
+        <path d="M30 110c-10-40 0-96 30-104 30 8 40 64 30 104z" fill="#e8e2d4"/>
+        <path d="M30 110c-6-24-4-52 6-74 4 30 12 56 24 74z" fill="#c9bfa6"/>
+        <rect x="26" y="108" width="68" height="18" fill="#2a2a26"/>
+        <path d="M34 126h52l-8 104c0 12-8 20-18 20s-18-8-18-20z" fill="#4f6238"/>
+        <rect x="40" y="168" width="40" height="8" fill="#3f5a2a"/>
+      </symbol>
+      <symbol id="tijeras" viewBox="0 0 260 140">
+        <path d="M120 64 250 18c6-2 9 4 4 8L132 76z" fill="#b9b2a2"/>
+        <path d="M120 76 254 114c6 2 4 9-2 8L130 66z" fill="#e8e2d4"/>
+        <circle cx="62" cy="40" r="30" fill="none" stroke="#2a2a26" stroke-width="12"/>
+        <circle cx="62" cy="102" r="30" fill="none" stroke="#2a2a26" stroke-width="12"/>
+        <path d="M86 56 128 70 86 86z" fill="#2a2a26"/>
+        <circle cx="122" cy="70" r="5" fill="#c9bfa6"/>
+      </symbol>
+    </defs>
+  </svg>
+
+
+  <div class="pagina">
+    <main class="contenido">
+
+      <!-- Menú fijo: transparente sobre la foto, oscuro al bajar -->
+      <header class="menu-fijo" id="menu-fijo">
+        <a class="menu-marca" href="#" aria-label="El Navajas, inicio">
+          <svg class="menu-emblema" aria-hidden="true"><use href="#emblema-svg"/></svg>
+          <span>El Navajas</span>
+        </a>
+        <nav aria-label="Secciones">
+          <a href="#tarifas">Tarifas</a>
+          <a href="#oficio">El oficio</a>
+          <a href="#equipo">Equipo</a>
+          <a href="#visita">Cómo llegar</a>
+        </nav>
+        <div class="menu-acciones">
+          <a class="menu-tel" href="tel:+34977000111">977 000 111</a>
+          <a class="boton boton-claro boton-menu" href="#reserva">Pedir cita</a>
+        </div>
+      </header>
+
+      <!-- Portada: el local en penumbra y el rótulo encima -->
+      <section class="portada">
+        <img class="portada-foto" src="/static/img/silla-ladrillo.jpg" alt="" width="1600" height="1063" fetchpriority="high">
+        <div class="portada-texto">
+          <svg class="portada-emblema escalon" aria-hidden="true"><use href="#emblema-svg"/></svg>
+          <h1 class="escalon">El Navajas</h1>
+          <p class="portada-oficio escalon">Barbería en la Calle Mayor 12, Tarragona</p>
+          <p class="portada-lema escalon">Corte clásico, arreglo de barba y afeitado a navaja con toalla caliente. Dos sillones y ninguna prisa.</p>
+          <div class="portada-botones escalon">
+            <a class="boton boton-claro" href="#reserva">Pedir cita</a>
+            <a class="boton boton-fantasma" href="#tarifas">Ver tarifas</a>
+          </div>
+          <p class="estado escalon" id="estado"><span class="punto" aria-hidden="true"></span><span id="estado-texto">Abrimos de lunes a sábado</span></p>
+        </div>
+      </section>
+
+      <!-- Información práctica en cuatro columnas -->
+      <section class="info" id="visita" aria-label="Información práctica">
+        <div class="info-item">
+          <svg class="info-icono" aria-hidden="true"><use href="#i-reloj"/></svg>
+          <h2>Horario</h2>
+          <dl class="horario-corto">
+            <div data-dias="1,2,3,4,5"><dt>Lunes a viernes</dt><dd>10:00 – 20:00</dd></div>
+            <div data-dias="6"><dt>Sábado</dt><dd>9:00 – 14:00</dd></div>
+            <div data-dias="0"><dt>Domingo y festivos</dt><dd>Cerrado</dd></div>
+          </dl>
+        </div>
+        <div class="info-item">
+          <svg class="info-icono" aria-hidden="true"><use href="#i-lugar"/></svg>
+          <h2>Dónde estamos</h2>
+          <p>Calle Mayor 12, Tarragona. A dos minutos de la Rambla Nova.</p>
+        </div>
+        <div class="info-item">
+          <svg class="info-icono" aria-hidden="true"><use href="#i-pago"/></svg>
+          <h2>Cómo pagar</h2>
+          <p>Al terminar, en efectivo, con tarjeta o con Bizum.</p>
+        </div>
+        <div class="info-item">
+          <svg class="info-icono" aria-hidden="true"><use href="#i-cancelar"/></svg>
+          <h2>Cancelar o cambiar</h2>
+          <p>Gratis hasta 2 horas antes. Llama o escribe al 977 000 111.</p>
+        </div>
+      </section>
+
+      <!-- Cinta: se mueve sola, como el rótulo de un escaparate -->
+      <div class="cinta" aria-hidden="true">
+        <div class="cinta-pista">
+          <span>Corte clásico</span><span>Corte y barba</span><span>Afeitado a navaja</span><span>Toalla caliente</span><span>Calle Mayor 12</span><span>Tarragona</span>
+          <span>Corte clásico</span><span>Corte y barba</span><span>Afeitado a navaja</span><span>Toalla caliente</span><span>Calle Mayor 12</span><span>Tarragona</span>
+        </div>
+      </div>
+
+      <!-- Tarifas: pizarra oscura con la navaja a media pantalla -->
+      <section id="tarifas" class="tarifas">
+        <div class="tarifas-texto aparece">
+          <h2>Tarifas</h2>
+          <p class="tarifas-intro">Precio cerrado, sin sorpresas. Pagas al terminar: efectivo, tarjeta o Bizum.</p>
+          <ul class="precios">
+            <li><span class="servicio">Corte clásico<small>30 minutos</small></span><span class="precio">15,00 €</span></li>
+            <li><span class="servicio">Corte + barba<small>45 minutos</small></span><span class="precio">22,50 €</span></li>
+            <li><span class="servicio">Arreglo de barba<small>20 minutos</small></span><span class="precio">10,00 €</span></li>
+          </ul>
+          <a class="boton boton-claro" href="#reserva">Pedir cita</a>
+        </div>
+        <figure class="tarifas-foto revela">
+          <img src="/static/img/corte.jpg" alt="Navaja de afeitar abierta en primer plano" width="1600" height="1200" loading="lazy">
+        </figure>
+      </section>
+
+      <!-- El oficio: la navaja se abre y las fotos se destapan al llegar -->
+      <section id="oficio" class="oficio">
+        <div class="oficio-cabecera aparece">
+          <svg class="navaja-viva" viewBox="0 0 420 120" aria-hidden="true">
+            <path d="M22 70c40-4 170-10 238-8 8 0 12 4 12 10v6c0 6-4 10-12 10-80 2-190-2-232-6-10-1-14-12-6-12z" fill="#2a2a26"/>
+            <g class="hoja">
+              <path d="M262 66 404 22c8-2 12 4 8 10l-34 46c-4 5-9 8-16 8H270z" fill="#e8e2d4"/>
+              <path d="M270 86h92c7 0 12-3 16-8l34-46c2-3 2-6 0-8L270 74z" fill="#b9b2a2"/>
+            </g>
+            <circle cx="262" cy="74" r="7" fill="#c9bfa6"/>
+          </svg>
+          <h2>El oficio</h2>
+          <p>Sillón de cuero, toalla caliente y navaja recién asentada. Lo de siempre, hecho con calma.</p>
+        </div>
+        <div class="galeria">
+          <figure class="g1 revela"><img src="/static/img/silla-espejo.jpg" alt="Sillón de barbero capitoné de cuero marrón en una barbería en penumbra" width="1600" height="1067" loading="lazy"><figcaption>El sillón, listo a las diez</figcaption></figure>
+          <figure class="g2 revela"><img src="/static/img/afeitado.jpg" alt="Hombre afeitándose con espuma frente a un espejo redondo" width="1600" height="1067" loading="lazy"><figcaption>Afeitado a la antigua</figcaption></figure>
+          <figure class="g3 revela"><img src="/static/img/silla-plata.jpg" alt="Sillón de barbero negro y cromado" width="1280" height="1600" loading="lazy"><figcaption>Cuero y cromo</figcaption></figure>
+          <figure class="g4 revela"><img src="/static/img/silla-blanca.jpg" alt="Sillón de barbero negro sobre suelo de baldosas blancas y negras" width="1067" height="1600" loading="lazy"><figcaption>Sin prisas</figcaption></figure>
+        </div>
+      </section>
+
+      <!-- Equipo: título arriba; foto con los dos resguardos de sillón y la carta al lado -->
+      <section id="equipo" class="carta-fondo">
+        <svg class="suelo" aria-hidden="true"><rect width="100%" height="100%" fill="url(#baldosa)"/></svg>
+        <div class="equipo-titular aparece">
+          <h2>Dos sillones y ninguna prisa.</h2>
+          <p>Quién te atiende en la Calle Mayor 12.</p>
+        </div>
+        <div class="equipo-rejilla">
+          <div class="equipo-foto">
+            <figure class="revela"><img src="/static/img/silla-plata.jpg" alt="Sillón de barbero negro y cromado" width="1280" height="1600" loading="lazy"></figure>
+            <ul class="sillones">
+              <li><span class="sillon-num">Sillón 1</span><span class="sillon-nombre">Carlos</span><span class="sillon-oficio">Degradados y cortes clásicos</span></li>
+              <li><span class="sillon-num">Sillón 2</span><span class="sillon-nombre">Miguel</span><span class="sillon-oficio">Barba y afeitado a navaja</span></li>
+            </ul>
+          </div>
+          <div class="equipo-carta">
+            <article class="carta aparece">
+              <svg class="sello-goma" viewBox="0 0 140 140" aria-hidden="true">
+                <defs><path id="circulo-sello" d="M70 70m-50 0a50 50 0 1 1 100 0a50 50 0 1 1-100 0"/></defs>
+                <circle cx="70" cy="70" r="64" fill="none" stroke="#9b2b25" stroke-width="3"/>
+                <circle cx="70" cy="70" r="38" fill="none" stroke="#9b2b25" stroke-width="1.5"/>
+                <text font-size="12" letter-spacing="2.5" fill="#9b2b25"><textPath href="#circulo-sello" textLength="300">EL NAVAJAS · CALLE MAYOR 12 ·</textPath></text>
+                <text x="70" y="77" text-anchor="middle" font-size="14" fill="#9b2b25" font-style="italic">Tarragona</text>
+              </svg>
+              <p>Somos Carlos y Miguel.</p>
+              <p>Carlos lleva los degradados y los cortes clásicos: si no sabes qué pedir, empieza por él. Miguel se encarga de la barba y del afeitado a navaja, con toalla caliente y bálsamo sin alcohol si tienes la piel sensible.</p>
+              <p>Si no puedes venir, avísanos hasta dos horas antes y no pasa nada. Si llegas más de quince minutos tarde, puede que tengamos que acortar el servicio para no hacer esperar al siguiente.</p>
+              <p class="firma">Carlos y Miguel<small>El Navajas, Calle Mayor 12</small></p>
+            </article>
+            <p class="resguardo aparece"><span>Guarda nuestro número</span><a href="tel:+34977000111">977 000 111</a></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reserva: cupón troquelado que prepara el mensaje de WhatsApp -->
+      <section id="reserva" class="reserva">
+        <img class="reserva-foto" src="/static/img/silla-blanca.jpg" alt="" width="1067" height="1600" loading="lazy">
+        <form class="cupon aparece" id="cupon">
+          <div class="cupon-titulo">
+            <h2>Pide tu turno</h2>
+            <p>Elige servicio, día y franja. Se abrirá WhatsApp con el mensaje ya escrito y te confirmamos la hora por ahí.</p>
+            <div class="vista-mensaje">
+              <span class="vista-de">Tu mensaje para El Navajas</span>
+              <p id="vista-texto" aria-live="polite">Hola, quiero pedir cita para un corte clásico. ¿Qué hora tenéis libre?</p>
+            </div>
+            <p class="cupon-tel">¿Prefieres llamar? <a href="tel:+34977000111">977 000 111</a></p>
+          </div>
+          <div class="cupon-campos">
+            <label class="etiqueta" for="c-nombre">Tu nombre</label>
+            <input id="c-nombre" name="nombre" placeholder="Por ejemplo, Pedro" autocomplete="given-name" required maxlength="40">
+
+            <fieldset class="opciones">
+              <legend class="etiqueta">Servicio</legend>
+              <label class="opcion"><input type="radio" name="servicio" value="corte clásico" checked><span>Corte clásico<small>15,00 €</small></span></label>
+              <label class="opcion"><input type="radio" name="servicio" value="corte + barba"><span>Corte + barba<small>22,50 €</small></span></label>
+              <label class="opcion"><input type="radio" name="servicio" value="arreglo de barba"><span>Arreglo de barba<small>10,00 €</small></span></label>
+            </fieldset>
+
+            <div class="cupon-fila">
+              <div class="campo-dia">
+                <label class="etiqueta" for="c-dia">Día</label>
+                <input id="c-dia" name="dia" type="date" required>
+              </div>
+              <fieldset class="opciones opciones-franja">
+                <legend class="etiqueta">Franja</legend>
+                <label class="opcion"><input type="radio" name="hora" value="por la mañana" checked><span>Mañana</span></label>
+                <label class="opcion"><input type="radio" name="hora" value="a mediodía"><span>Mediodía</span></label>
+                <label class="opcion"><input type="radio" name="hora" value="por la tarde"><span>Tarde</span></label>
+              </fieldset>
+            </div>
+
+            <button type="submit">Enviar por WhatsApp</button>
+            <p class="cupon-aviso" id="cupon-aviso" role="status"></p>
+          </div>
+        </form>
+      </section>
+
+      <!-- Pie oscuro: emblema, datos, menú y el nombre grande -->
+      <footer class="pie-fondo">
+        <div class="pie-rejilla">
+          <div class="pie-marca">
+            <svg class="pie-emblema" aria-hidden="true"><use href="#emblema-svg"/></svg>
+            <p>Corte, barba y navaja en la Calle Mayor 12. Si tienes dudas antes de venir, pregunta al asistente (abajo a la derecha).</p>
+          </div>
+          <div>
+            <h2>Horario</h2>
+            <p>Lunes a viernes, 10:00 – 20:00</p>
+            <p>Sábado, 9:00 – 14:00</p>
+            <p>Domingo y festivos, cerrado</p>
+          </div>
+          <div>
+            <h2>Contacto</h2>
+            <p>Calle Mayor 12, Tarragona</p>
+            <p><a href="tel:+34977000111">977 000 111</a> (también WhatsApp)</p>
+            <p><a href="#reserva">Pedir cita</a></p>
+          </div>
+          <nav aria-label="Secciones del pie">
+            <h2>La barbería</h2>
+            <p><a href="#tarifas">Tarifas</a></p>
+            <p><a href="#oficio">El oficio</a></p>
+            <p><a href="#equipo">Equipo</a></p>
+          </nav>
+        </div>
+        <p class="imprenta">Barbería ficticia de un proyecto de portfolio. Datos de prueba. Fotos de Unsplash (licencia Unsplash), de ambientación: Nathon Oski, Hair Spies, Redd Francisco, Supply, Joshua Lawrence y Caio Coelho.</p>
+        <p class="marca-grande" aria-hidden="true">El Navajas</p>
+      </footer>
+    </main>
+
+    <button type="button" class="abrir-chat" id="abrir-chat" aria-controls="asistente" aria-expanded="false">
+      <span class="abrir-chat-texto">¿Dudas? Pregunta</span>
+    </button>
+
+    <aside class="asistente" id="asistente" aria-label="Asistente" inert>
+      <div class="asistente-cabecera">
+        <div>
+          <h2>Pregunta antes de venir</h2>
+          <p>Te responde con nuestras normas y horarios.</p>
+        </div>
+        <div class="asistente-botones">
+          <button type="button" id="reiniciar" class="reiniciar">Empezar de nuevo</button>
+          <button type="button" id="cerrar-chat" class="cerrar" aria-label="Cerrar el asistente">✕</button>
+        </div>
+      </div>
+      <section id="chat" class="chat" aria-live="polite">
+        <div class="bienvenida">
+          <p>¿Qué quieres saber?</p>
+          <div class="sugerencias">
+            <button type="button" class="chip">¿Abrís los sábados por la tarde?</button>
+            <button type="button" class="chip">¿Hasta cuándo puedo cancelar?</button>
+            <button type="button" class="chip">¿Puedo pagar con Bizum?</button>
+          </div>
+        </div>
+      </section>
+      <p id="pensando" class="pensando" hidden>Escribiendo…</p>
+      <form id="formulario" class="formulario" autocomplete="off">
+        <input id="entrada" type="text" maxlength="1000" placeholder="Escribe tu pregunta" aria-label="Tu pregunta" required>
+        <button id="enviar" type="submit">Enviar</button>
+      </form>
+      <p class="pie">IA local en el ordenador de la barbería. No ve la agenda ni datos de clientes. <span id="modelo"></span></p>
+    </aside>
+  </div>
+</body>
+</html>

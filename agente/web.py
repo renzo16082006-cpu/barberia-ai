@@ -1,6 +1,9 @@
 """Web de chat de la barbería, encima del harness (agente/harness.py).
 
-Arrancar:  uv run python agente\\web.py   y abrir http://127.0.0.1:8000
+Arrancar:  uv run python agente\\web.py
+  http://127.0.0.1:8000/       web pública de la barbería + asistente para CLIENTES (solo documentos)
+  http://127.0.0.1:8000/panel  panel INTERNO del personal (todas las tools, confirma antes de escribir)
+  En producción /panel y /api/interno necesitarían login; aquí los protege que solo se escucha en 127.0.0.1.
 
 Seguridad:
 - Solo escucha en 127.0.0.1: nadie de tu red (ni del wifi) puede entrar.
@@ -32,14 +35,16 @@ ORIGENES = {f"http://{HOST}:{PUERTO}", f"http://localhost:{PUERTO}"}
 MAX_TEXTO = 1000  # caracteres por mensaje
 ESTATICOS = Path(__file__).resolve().parent / "static"
 
-estado = {}  # "agente": la conversación actual (demo local: una sola)
+ROLES_WEB = {"cliente", "interno"}
+agentes = {}  # una conversación por rol (demo local)
 candado = asyncio.Lock()  # una petición cada vez: el agente no se mezcla
 
 
 @contextlib.asynccontextmanager
 async def lifespan(app):
     async with Client(mcp) as client:
-        estado["agente"] = await Agente.crear(client)
+        for rol in ROLES_WEB:
+            agentes[rol] = await Agente.crear(client, rol)
         yield
 
 
@@ -80,7 +85,15 @@ async def ejecutar(corrutina) -> JSONResponse:
 
 
 async def portada(request: Request):
+    return FileResponse(ESTATICOS / "barberia.html")
+
+
+async def panel(request: Request):
     return FileResponse(ESTATICOS / "index.html")
+
+
+def agente_de(request: Request):
+    return agentes.get(request.path_params["rol"])  # None si el rol no existe
 
 
 async def info(request: Request):
@@ -88,35 +101,44 @@ async def info(request: Request):
 
 
 async def chat(request: Request):
+    agente = agente_de(request)
+    if agente is None:
+        return error("No encontrado.", 404)
     texto = (await leer_json(request)).get("texto")
     if not isinstance(texto, str) or not texto.strip():
         return error("Escribe un mensaje.")
     if len(texto) > MAX_TEXTO:
         return error(f"Mensaje demasiado largo (máximo {MAX_TEXTO} caracteres).")
-    return await ejecutar(estado["agente"].preguntar(texto.strip()))
+    return await ejecutar(agente.preguntar(texto.strip()))
 
 
 async def confirmar(request: Request):
+    agente = agente_de(request)
+    if agente is None:
+        return error("No encontrado.", 404)
     si = (await leer_json(request)).get("si")
     if not isinstance(si, bool):
         return error("Falta la respuesta sí/no.")
-    return await ejecutar(estado["agente"].confirmar(si))
+    return await ejecutar(agente.confirmar(si))
 
 
 async def reiniciar(request: Request):
+    viejo = agente_de(request)
+    if viejo is None:
+        return error("No encontrado.", 404)
     async with candado:
-        viejo = estado["agente"]
-        estado["agente"] = Agente(viejo.client, viejo.tools)
+        agentes[viejo.rol] = Agente(viejo.client, viejo.todas, viejo.rol)
     return JSONResponse({"ok": True})
 
 
 app = Starlette(
     routes=[
         Route("/", portada),
+        Route("/panel", panel),
         Route("/api/info", info),
-        Route("/api/chat", chat, methods=["POST"]),
-        Route("/api/confirmar", confirmar, methods=["POST"]),
-        Route("/api/reiniciar", reiniciar, methods=["POST"]),
+        Route("/api/{rol}/chat", chat, methods=["POST"]),
+        Route("/api/{rol}/confirmar", confirmar, methods=["POST"]),
+        Route("/api/{rol}/reiniciar", reiniciar, methods=["POST"]),
         Mount("/static", StaticFiles(directory=ESTATICOS), name="static"),
     ],
     middleware=[Middleware(BaseHTTPMiddleware, dispatch=seguridad)],
@@ -125,5 +147,5 @@ app = Starlette(
 )
 
 if __name__ == "__main__":
-    print(f"Asistente de {NOMBRE_BARBERIA} en http://{HOST}:{PUERTO}  (Ctrl+C para parar)")
+    print(f"Web de {NOMBRE_BARBERIA}: http://{HOST}:{PUERTO}   Panel interno: http://{HOST}:{PUERTO}/panel   (Ctrl+C para parar)")
     uvicorn.run(app, host=HOST, port=PUERTO, log_level="warning")

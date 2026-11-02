@@ -35,7 +35,7 @@ ESCRITURA = {"crear_cita", "cancelar_cita"}
 DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
 
 
-def prompt_sistema() -> str:
+def fechas() -> str:
     # Las fechas relativas las calcula el CÓDIGO: el modelo solo tiene que copiarlas.
     hoy = datetime.now(MADRID)
     ayer = hoy - timedelta(days=1)
@@ -43,14 +43,46 @@ def prompt_sistema() -> str:
         f"{DIAS[d.weekday()]} {d:%Y-%m-%d}" for d in (hoy + timedelta(days=i) for i in range(1, 8))
     )
     return (
-        f"Eres el asistente interno de la barbería {NOMBRE_BARBERIA}. "
         f"Hoy es {DIAS[hoy.weekday()]} {hoy:%Y-%m-%d} y son las {hoy:%H:%M} (Europe/Madrid). "
         f"Ayer fue {ayer:%Y-%m-%d}. Mañana es {DIAS[(hoy + timedelta(days=1)).weekday()]} "
         f"{hoy + timedelta(days=1):%Y-%m-%d}. Próximos días: {proximos}. "
+    )
+
+
+def prompt_interno() -> str:
+    return (
+        f"Eres el asistente interno de la barbería {NOMBRE_BARBERIA}; hablas con el personal. {fechas()}"
         "Usa las tools para consultar o modificar datos; nunca inventes datos. "
         "Si una tool devuelve un error, explícaselo al usuario con tus palabras. "
         "Responde en español, breve y claro."
     )
+
+
+def prompt_cliente() -> str:
+    return (
+        f"Eres el asistente de la web pública de la barbería {NOMBRE_BARBERIA}; hablas con clientes. {fechas()}"
+        "Responde SOLO sobre horarios, normas (cancelaciones, pagos), cuidados y la barbería, "
+        "usando consultar_documentos; si los documentos no lo dicen, di que no lo sabes. "
+        "No tienes acceso a la agenda ni a datos de clientes: para reservar, cambiar o anular "
+        "una cita, indica que llamen a la barbería. Si la pregunta no trata de la barbería "
+        "(matemáticas, videojuegos, noticias, deberes...), no la respondas. "
+        "Responde en español, breve y amable."
+    )
+
+
+# Permisos por rol: el CÓDIGO decide qué tools recibe cada asistente.
+# Una tool que no está en la lista no se le enseña al modelo y, si la pide igualmente, no se ejecuta.
+ROLES = {
+    "interno": {"tools": None, "prompt": prompt_interno, "exige_documentos": False},  # None = todas
+    "cliente": {"tools": {"consultar_documentos"}, "prompt": prompt_cliente, "exige_documentos": True},
+}
+
+# Si el asistente de clientes contesta SIN haber mirado los documentos, no se fía de él:
+# o es una pregunta fuera de tema o se lo está inventando. Lo decide el código, no el modelo.
+FUERA_DE_TEMA = (
+    "Solo puedo ayudarte con cosas de la barbería: horarios, cómo cancelar o cambiar una cita, "
+    "formas de pago y cuidados después del corte. ¿Qué quieres saber?"
+)
 
 
 def llamar_modelo(mensajes: list, tools: list) -> dict:
@@ -73,18 +105,21 @@ def llamar_modelo(mensajes: list, tools: list) -> dict:
 
 
 class Agente:
-    def __init__(self, client: Client, tools: list):
+    def __init__(self, client: Client, tools: list, rol: str = "interno"):
+        permitidas = ROLES[rol]["tools"]
         self.client = client
-        self.tools = tools
-        self.nombres = {t["function"]["name"] for t in tools}
-        self.mensajes = [{"role": "system", "content": prompt_sistema()}]
+        self.rol = rol
+        self.todas = tools  # para poder crear otra conversación igual (reiniciar)
+        self.tools = [t for t in tools if permitidas is None or t["function"]["name"] in permitidas]
+        self.nombres = {t["function"]["name"] for t in self.tools}
+        self.mensajes = [{"role": "system", "content": ROLES[rol]["prompt"]()}]
         self.cola = []  # llamadas a tools que el modelo pidió y aún no se han hecho
         self.pendiente = None  # llamada de escritura esperando confirmación
         self.pasos = 0
         self.traza = []  # qué tools se han usado en esta pregunta (para mostrarlo)
 
     @classmethod
-    async def crear(cls, client: Client) -> "Agente":
+    async def crear(cls, client: Client, rol: str = "interno") -> "Agente":
         tools = [
             {
                 "type": "function",
@@ -92,7 +127,7 @@ class Agente:
             }
             for t in await client.list_tools()
         ]
-        return cls(client, tools)
+        return cls(client, tools, rol)
 
     async def preguntar(self, texto: str) -> dict:
         if self.pendiente:
@@ -145,7 +180,11 @@ class Agente:
                 {"role": "assistant", "content": msg.get("content", ""), "tool_calls": msg.get("tool_calls", [])}
             )
             if not msg.get("tool_calls"):
-                return self._respuesta(msg.get("content", ""))
+                texto = msg.get("content", "")
+                if ROLES[self.rol]["exige_documentos"] and not self.traza:
+                    texto = FUERA_DE_TEMA
+                    self.mensajes[-1]["content"] = texto  # el historial guarda lo que de verdad se mostró
+                return self._respuesta(texto)
             self.cola = list(msg["tool_calls"])
 
     @staticmethod
@@ -155,9 +194,9 @@ class Agente:
 
     async def _ejecutar(self, llamada: dict) -> dict:
         nombre = llamada["function"]["name"]
-        if nombre not in self.nombres:  # el modelo se ha inventado una tool
-            self.traza.append(f"❌ {nombre} (no existe)")
-            return {"error": f"La tool {nombre} no existe."}
+        if nombre not in self.nombres:  # tool inventada o no permitida para este rol
+            self.traza.append(f"⛔ {nombre} (no permitida)")
+            return {"error": f"La tool {nombre} no existe o no está permitida."}
         args = self._argumentos(llamada)
         self.traza.append(f"🔧 {nombre}({', '.join(f'{k}={v}' for k, v in args.items())})")
         try:

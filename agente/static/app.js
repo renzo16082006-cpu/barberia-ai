@@ -1,6 +1,7 @@
 // Chat de la barbería. Regla de seguridad: el texto del modelo SIEMPRE se pinta con
 // textContent / createTextNode, nunca con innerHTML (así un <script> se ve como texto).
 const $ = (s) => document.querySelector(s);
+const ROL = document.body.dataset.rol || "interno"; // "cliente" en la web pública
 const chat = $("#chat");
 const entrada = $("#entrada");
 const enviar = $("#enviar");
@@ -85,7 +86,7 @@ function pedirConfirmacion(r) {
     si.disabled = no.disabled = true;
     botones.replaceWith(crear("p", "decision", respuesta ? "✔ Confirmado" : "✋ Rechazado"));
     $("#pensando").hidden = false;
-    mostrar(await api("/api/confirmar", { si: respuesta }));
+    mostrar(await api(`/api/${ROL}/confirmar`, { si: respuesta }));
   };
   si.addEventListener("click", () => responder(true));
   no.addEventListener("click", () => responder(false));
@@ -94,7 +95,7 @@ function pedirConfirmacion(r) {
 async function preguntar(texto) {
   mensaje("yo", texto);
   ocupado(true);
-  mostrar(await api("/api/chat", { texto }));
+  mostrar(await api(`/api/${ROL}/chat`, { texto }));
 }
 
 $("#formulario").addEventListener("submit", (e) => {
@@ -110,16 +111,18 @@ document.querySelectorAll(".chip").forEach((chip) =>
 );
 
 $("#reiniciar").addEventListener("click", async () => {
-  await api("/api/reiniciar", {});
+  await api(`/api/${ROL}/reiniciar`, {});
   location.reload();
 });
 
 fetch("/api/info")
   .then((r) => r.json())
   .then((d) => {
-    $("#barberia").textContent = d.barberia;
-    $("#modelo").textContent = d.modelo;
-    document.title = `${d.barberia} · Asistente`;
+    if ($("#modelo")) $("#modelo").textContent = d.modelo;
+    if (ROL === "interno") {
+      $("#barberia").textContent = d.barberia;
+      document.title = `${d.barberia} · Panel interno`;
+    }
   });
 
-entrada.focus();
+if (ROL === "interno") entrada.focus();

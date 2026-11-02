@@ -1,0 +1,7 @@
+Tipografías alojadas en local (la Content-Security-Policy no permite cargar fuentes de otros dominios).
+Descargadas del paquete npm de Fontsource (subconjunto "latin", versión variable).
+
+- Bodoni Moda: Copyright 2020 The Bodoni Moda Project Authors (https://github.com/indestructible-type/Bodoni)
+- Jost: Copyright 2020 The Jost Project Authors (https://github.com/indestructible-type/Jost)
+
+Ambas con licencia SIL Open Font License 1.1: https://openfontlicense.org
