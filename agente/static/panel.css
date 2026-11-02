@@ -1,0 +1,163 @@
+/* Panel interno: mismo mundo que la web pública (Bodoni Moda + Jost, arena, musgo y oscuro),
+   pero tranquilo: es una herramienta de trabajo, prima leer rápido. */
+@font-face { font-family: "Bodoni Moda"; src: url("/static/fonts/bodoni-moda.woff2") format("woff2"); font-weight: 400 900; font-display: swap; }
+@font-face { font-family: "Jost"; src: url("/static/fonts/jost.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+
+body.panel {
+  --papel: #f3eee3; --arena: #ddd6c6; --surface: #d2cab8; --ink: #2a2a26; --muted: #59574e;
+  --accent: #4f6238; --campo: #2f4321; --granate: #9b2b25; --oscuro: #1f1f1c;
+  --display: "Bodoni Moda", Didot, Georgia, serif; --texto: "Jost", "Segoe UI", system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  margin: 0; min-height: 100vh;
+  display: grid; grid-template-columns: 300px minmax(0, 1fr);
+  background: var(--papel); color: var(--ink);
+  font-family: var(--texto); font-size: 16px; line-height: 1.55;
+}
+body.panel :focus-visible { outline: 3px solid var(--granate); outline-offset: 2px; }
+::selection { background: var(--accent); color: #fff; }
+
+/* Lateral oscuro */
+.lateral {
+  position: sticky; top: 0; height: 100vh; box-sizing: border-box;
+  background: var(--oscuro); color: #cfc8b6;
+  padding: 28px 24px; display: flex; flex-direction: column; gap: 28px;
+}
+.lateral-marca { display: flex; align-items: center; gap: 14px; }
+.lateral-emblema { width: 56px; height: 56px; flex-shrink: 0; }
+.lateral h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 26px; line-height: 1.1; color: var(--papel); }
+.lateral-marca p { margin: 2px 0 0; font-size: 14px; color: #9e9788; }
+body.panel .nueva {
+  background: var(--papel); color: var(--ink); border: 0; border-radius: 0;
+  font: 500 15px var(--texto); padding: 12px 16px; text-align: left; cursor: pointer;
+  transition: transform 160ms var(--ease-out), background-color 160ms ease;
+}
+body.panel .nueva:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) { body.panel .nueva:hover { background: #fff; } }
+.lateral-bloque h2 { margin: 0 0 10px; font-family: var(--display); font-weight: 500; font-size: 18px; color: var(--papel); }
+.lateral-bloque ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 15px; }
+.lateral-bloque li::marker { color: var(--accent); }
+.lateral-aviso { margin-top: auto; font-size: 13px; color: #9e9788; display: grid; gap: 8px; }
+.lateral-aviso p { margin: 0; }
+.lateral-aviso strong { color: var(--papel); font-weight: 500; }
+
+/* Zona de chat */
+body.panel .app { max-width: 820px; width: 100%; margin: 0 auto; height: 100vh; padding: 24px 32px 20px; box-sizing: border-box; display: flex; flex-direction: column; }
+body.panel .chat { padding: 12px 0 20px; gap: 14px; }
+body.panel .bienvenida { margin: auto 0; text-align: left; color: var(--ink); }
+.bienvenida-titulo { margin: 0 0 16px; font-family: var(--display); font-size: 38px; line-height: 1.1; }
+body.panel .sugerencias { justify-content: flex-start; gap: 8px; }
+body.panel .chip {
+  background: #fff; color: var(--ink); border: 1px solid var(--surface); border-radius: 0;
+  font: 400 15px var(--texto); padding: 10px 14px;
+  transition: transform 160ms var(--ease-out), border-color 160ms ease;
+}
+body.panel .chip:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) { body.panel .chip:hover { border-color: var(--ink); color: var(--ink); } }
+
+body.panel .msg { border-radius: 0; font-size: 15.5px; max-width: 85%; }
+body.panel .msg.yo { background: var(--accent); color: #fff; }
+body.panel .msg.bot { background: #fff; border: 1px solid var(--surface); }
+body.panel .msg.error { background: #f6e3e1; color: var(--granate); border: 1px solid #e8c3be; border-radius: 0; }
+body.panel .traza { font-size: 12px; color: var(--muted); border-bottom-color: var(--arena); }
+
+/* Tarjeta de confirmación: cabecera oscura, datos exactos y dos botones */
+body.panel .msg.confirmar { background: #fff; border: 1px solid var(--surface); padding: 0; overflow: hidden; min-width: 300px; }
+body.panel .msg.confirmar .traza { margin: 12px 16px 0; }
+body.panel .msg.confirmar .titulo { margin: 0; padding: 12px 16px; background: var(--oscuro); color: var(--papel); font-weight: 500; }
+body.panel .argumentos { margin: 14px 16px; font-family: var(--texto); font-size: 15px; gap: 6px 16px; }
+body.panel .argumentos dd { font-variant-numeric: tabular-nums; }
+body.panel .botones { padding: 0 16px 16px; }
+body.panel .decision { padding: 0 16px 14px; }
+body.panel .botones button { border-radius: 0; font: 500 15px var(--texto); padding: 10px 18px; transition: transform 160ms var(--ease-out); }
+body.panel .botones button:active { transform: scale(0.97); }
+body.panel button.peligro { background: var(--granate); }
+body.panel button.secundario { background: var(--papel); border: 1px solid var(--surface); color: var(--ink); }
+
+body.panel .pensando { color: var(--muted); }
+body.panel .formulario input { background: #fff; border: 1px solid var(--surface); border-radius: 0; padding: 14px 16px; font: 16px var(--texto); min-width: 0; }
+body.panel .formulario input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79, 98, 56, .2); }
+body.panel #enviar { background: var(--oscuro); border-radius: 0; font: 500 15px var(--texto); padding: 0 22px; transition: transform 160ms var(--ease-out); }
+body.panel #enviar:active { transform: scale(0.97); }
+
+.defs-ocultos { position: absolute; }
+
+/* ---------- Botones con icono del lateral ---------- */
+.icono { width: 20px; height: 20px; flex-shrink: 0; }
+body.panel .nueva { display: flex; align-items: center; gap: 10px; }
+.ver-web { display: flex; align-items: center; gap: 10px; color: #cfc8b6; text-decoration: none; font-size: 15px; padding: 10px 2px; transition: color 160ms ease; }
+@media (hover: hover) and (pointer: fine) { .ver-web:hover { color: var(--papel); } }
+
+/* ---------- Bienvenida ---------- */
+.bienvenida-emblema { width: 64px; height: 64px; margin-bottom: 18px; }
+.bienvenida-texto { margin: -6px 0 18px; color: var(--muted); max-width: 52ch; }
+
+/* =========================================================
+   Movimiento (Emil): el chat se usa decenas de veces al día,
+   así que todo es corto (≤ 240 ms), con ease-out fuerte y solo transform/opacity.
+   ========================================================= */
+@keyframes entra { from { opacity: 0; transform: translateY(8px); } }
+@keyframes entra-tarjeta { from { opacity: 0; transform: translateY(6px) scale(0.97); } }
+body.panel .msg { animation: entra 220ms var(--ease-out) both; }
+body.panel .msg.yo { transform-origin: bottom right; }
+body.panel .msg.confirmar { animation: entra-tarjeta 240ms var(--ease-out) both; transform-origin: top left; }
+body.panel .decision { animation: entra 200ms var(--ease-out) both; color: var(--accent); }
+
+/* Bienvenida: emblema, título, texto y sugerencias en cascada (una vez, al cargar) */
+.bienvenida > * { animation: entra 360ms var(--ease-out) both; }
+.bienvenida > :nth-child(2) { animation-delay: 50ms; }
+.bienvenida > :nth-child(3) { animation-delay: 100ms; }
+.bienvenida .chip { animation: entra 300ms var(--ease-out) both; }
+.bienvenida .chip:nth-child(1) { animation-delay: 150ms; }
+.bienvenida .chip:nth-child(2) { animation-delay: 190ms; }
+.bienvenida .chip:nth-child(3) { animation-delay: 230ms; }
+.bienvenida .chip:nth-child(4) { animation-delay: 270ms; }
+
+/* Indicador de "consultando": tres puntos que laten */
+body.panel .pensando { display: flex; align-items: center; gap: 10px; font-style: normal; font-size: 14px; animation: entra 200ms var(--ease-out) both; }
+body.panel .pensando[hidden] { display: none; }
+.puntos { display: inline-flex; gap: 4px; }
+.puntos i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: latir 1s ease-in-out infinite; }
+.puntos i:nth-child(2) { animation-delay: 150ms; }
+.puntos i:nth-child(3) { animation-delay: 300ms; }
+@keyframes latir { 0%, 100% { opacity: .25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+
+/* El campo de texto avisa de que está escuchando */
+body.panel .formulario input { transition: border-color 160ms ease, box-shadow 160ms ease; }
+
+/* =========================================================
+   Tamaños: cada uno con su propia composición (Impeccable: adapt)
+   ========================================================= */
+
+/* Media pantalla (unos 640-1100 px): el lateral pasa a ser un carril con iconos */
+@media (max-width: 1100px) {
+  body.panel { grid-template-columns: 76px minmax(0, 1fr); }
+  .lateral { padding: 20px 12px; align-items: center; gap: 16px; }
+  .lateral-marca div, .lateral-bloque, .lateral-aviso, .texto-boton { display: none; }
+  .lateral-emblema { width: 48px; height: 48px; }
+  body.panel .nueva, .ver-web { width: 48px; height: 48px; padding: 0; justify-content: center; }
+  .ver-web { color: #9e9788; }
+  body.panel .app { padding: 20px 24px 16px; }
+  .bienvenida-titulo { font-size: 32px; }
+}
+
+/* Móvil: barra superior compacta */
+@media (max-width: 640px) {
+  body.panel { display: flex; flex-direction: column; height: 100svh; }
+  .lateral { position: sticky; top: 0; z-index: 2; height: auto; flex-direction: row; justify-content: flex-start; padding: 10px 12px; gap: 10px; }
+  .lateral-marca { margin-right: auto; }
+  .lateral-marca div { display: block; }
+  .lateral-marca p { display: none; }
+  .lateral h1 { font-size: 20px; }
+  .lateral-emblema { width: 40px; height: 40px; }
+  body.panel .nueva, .ver-web { width: 40px; height: 40px; }
+  body.panel .app { height: auto; flex: 1; min-height: 0; padding: 12px; }
+  body.panel .msg { max-width: 92%; }
+  .bienvenida-titulo { font-size: 28px; }
+  body.panel .msg.confirmar { min-width: 0; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.panel .msg, body.panel .msg.confirmar, body.panel .decision, .bienvenida > *, .bienvenida .chip, body.panel .pensando { animation: none; }
+  .puntos i { animation: none; opacity: .6; }
+}
+body.panel .msg.confirmar .traza { border-bottom-color: var(--arena); padding-bottom: 10px; margin-bottom: 0; }

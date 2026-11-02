@@ -3,43 +3,92 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Barbería IA · Asistente</title>
+  <title>El Navajas · Panel interno</title>
+  <link rel="preload" href="/static/fonts/jost.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/estilos.css">
+  <link rel="stylesheet" href="/static/panel.css">
   <script src="/static/app.js" defer></script>
 </head>
-<body data-rol="interno">
-  <div class="poste" aria-hidden="true"></div>
-  <main class="app">
-    <header class="cabecera">
-      <div>
-        <p class="sobre">Panel interno · personal</p>
-        <h1 id="barberia">Barbería</h1>
-      </div>
-      <div class="acciones">
-        <span class="modelo" id="modelo" title="Modelo local en Ollama"></span>
-        <button type="button" id="reiniciar" class="secundario">Nueva conversación</button>
-      </div>
-    </header>
+<body class="panel" data-rol="interno">
+  <svg width="0" height="0" class="defs-ocultos" aria-hidden="true"><defs>
+    <symbol id="emblema-svg" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="78" fill="#1f1f1c"/>
+        <circle cx="80" cy="80" r="70" fill="none" stroke="#e3d3a8" stroke-width="1.5"/>
+        <circle cx="80" cy="80" r="46" fill="none" stroke="#e3d3a8" stroke-width="1"/>
+        <path id="arco-sup" d="M24 80a56 56 0 0 1 112 0" fill="none"/>
+        <path id="arco-inf" d="M28 80a52 52 0 0 0 104 0" fill="none"/>
+        <text font-family="Jost, sans-serif" font-size="15" font-weight="500" letter-spacing="4" fill="#e3d3a8" text-anchor="middle"><textPath href="#arco-sup" startOffset="50%">EL NAVAJAS</textPath></text>
+        <text font-family="Jost, sans-serif" font-size="11" letter-spacing="3" fill="#e3d3a8" text-anchor="middle"><textPath href="#arco-inf" startOffset="50%" side="right">TARRAGONA</textPath></text>
+        <circle cx="30" cy="80" r="2.5" fill="#9b2b25"/><circle cx="130" cy="80" r="2.5" fill="#9b2b25"/>
+        <g transform="translate(80 80) rotate(-35)">
+          <rect x="-4" y="-34" width="8" height="40" rx="2" fill="#e3d3a8"/>
+          <path d="M-4 6h8l-1 28h-6z" fill="#9b2b25"/>
+        </g>
+        <g transform="translate(80 80) rotate(35)">
+          <path d="M-5 -34h10v34h-10z" fill="#f3eee3"/>
+          <path d="M-5 0h10l-2 34h-6z" fill="#3f5a2a"/>
+        </g>
+        <circle cx="80" cy="80" r="5" fill="#1f1f1c" stroke="#e3d3a8" stroke-width="1.5"/>
+      </symbol>
+  </defs></svg>
 
+  <aside class="lateral">
+    <div class="lateral-marca">
+      <svg class="lateral-emblema" aria-hidden="true"><use href="#emblema-svg"/></svg>
+      <div>
+        <h1 id="barberia">El Navajas</h1>
+        <p>Panel interno del personal</p>
+      </div>
+    </div>
+
+    <button type="button" id="reiniciar" class="nueva" title="Nueva conversación">
+      <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span class="texto-boton">Nueva conversación</span>
+    </button>
+
+    <div class="lateral-bloque">
+      <h2>Puedo ayudarte con</h2>
+      <ul>
+        <li>La agenda del día y las citas de cada cliente</li>
+        <li>Buscar clientes</li>
+        <li>El resumen de ventas de unas fechas</li>
+        <li>Las normas, horarios y cuidados</li>
+        <li>Crear y cancelar citas</li>
+      </ul>
+    </div>
+
+    <a class="ver-web" href="/" title="Ver la web pública">
+      <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <span class="texto-boton">Ver la web pública</span>
+    </a>
+
+    <div class="lateral-aviso">
+      <p><strong>Crear o cancelar</strong> siempre pide tu confirmación con los datos exactos.</p>
+      <p>Todo se ejecuta en este ordenador. Modelo: <span id="modelo">local</span></p>
+    </div>
+  </aside>
+
+  <main class="app">
     <section id="chat" class="chat" aria-live="polite">
       <div class="bienvenida">
-        <p>Pregunta por la agenda, los clientes, las ventas o las normas de la barbería.</p>
+        <svg class="bienvenida-emblema" aria-hidden="true"><use href="#emblema-svg"/></svg>
+        <p class="bienvenida-titulo">¿Qué necesitas?</p>
+        <p class="bienvenida-texto">Pregunta por la agenda, los clientes o las ventas. Para crear o cancelar una cita, te pediré confirmación.</p>
         <div class="sugerencias">
           <button type="button" class="chip">¿Qué citas hay mañana?</button>
           <button type="button" class="chip">¿Cuánto facturamos en octubre?</button>
-          <button type="button" class="chip">¿Abrís los sábados por la tarde?</button>
           <button type="button" class="chip">¿Qué citas pendientes tiene Pedro?</button>
+          <button type="button" class="chip">¿Abrís los sábados por la tarde?</button>
         </div>
       </div>
     </section>
 
-    <p id="pensando" class="pensando" hidden>El asistente está pensando…</p>
+    <p id="pensando" class="pensando" hidden><span class="puntos" aria-hidden="true"><i></i><i></i><i></i></span>Consultando…</p>
 
     <form id="formulario" class="formulario" autocomplete="off">
-      <input id="entrada" type="text" maxlength="1000" placeholder="Escribe tu pregunta…" aria-label="Mensaje" required>
+      <input id="entrada" type="text" maxlength="1000" placeholder="Escribe una pregunta o una orden" aria-label="Mensaje" required>
       <button id="enviar" type="submit">Enviar</button>
     </form>
-    <p class="pie">Todo se ejecuta en local · las acciones que modifican datos piden confirmación</p>
   </main>
 </body>
 </html>
