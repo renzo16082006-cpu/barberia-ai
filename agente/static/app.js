@@ -22,7 +22,8 @@ function conNegritas(el, texto) {
   });
 }
 
-function mensaje(quien, texto, traza = []) {
+// Fuentes: las manda el servidor (lo que devolvió consultar_documentos), no las escribe el modelo.
+function mensaje(quien, texto, traza = [], fuentes = []) {
   $(".bienvenida")?.remove();
   const div = crear("div", `msg ${quien}`);
   if (traza.length) {
@@ -34,6 +35,16 @@ function mensaje(quien, texto, traza = []) {
     const cuerpo = crear("div", "texto");
     conNegritas(cuerpo, texto);
     div.append(cuerpo);
+  }
+  if (fuentes.length) {
+    const lista = crear("div", "fuentes");
+    lista.append(crear("span", "etiqueta", "Consultado en"));
+    fuentes.forEach((f) => {
+      const chip = crear("span", "fuente", `📄 ${f.seccion}`);
+      chip.title = f.cita; // al pasar el ratón: "servicios.md > Corte + barba"
+      lista.append(chip);
+    });
+    div.append(lista);
   }
   chat.append(div);
   chat.scrollTop = chat.scrollHeight;
@@ -61,7 +72,7 @@ async function api(ruta, datos) {
 
 function mostrar(r) {
   if (r.tipo === "confirmar") return pedirConfirmacion(r);
-  mensaje(r.tipo === "error" ? "error" : "bot", r.texto || "(sin respuesta)", r.traza || []);
+  mensaje(r.tipo === "error" ? "error" : "bot", r.texto || "(sin respuesta)", r.traza || [], r.fuentes || []);
   ocupado(false);
   entrada.focus();
 }

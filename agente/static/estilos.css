@@ -54,6 +54,10 @@ h1 { margin: 2px 0 0; font-family: Georgia, "Times New Roman", serif; font-size:
 
 .msg { max-width: 78%; padding: 12px 14px; border-radius: var(--radio); line-height: 1.45; }
 .msg .texto { white-space: pre-wrap; }
+.msg .fuentes { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 10px; }
+.msg .fuentes .etiqueta { font-size: 0.78em; color: var(--suave); margin-right: 2px; }
+.msg .fuente { display: inline-block; padding: 0 7px; border-radius: 999px; background: rgb(0 0 0 / 0.07);
+  font-size: 0.78em; line-height: 1.6; color: var(--suave); white-space: nowrap; vertical-align: 1px; cursor: default; }
 .msg.yo { align-self: flex-end; background: var(--tinta); color: #fff; border-bottom-right-radius: 4px; }
 .msg.bot { align-self: flex-start; background: var(--papel); border: 1px solid var(--linea); border-bottom-left-radius: 4px; }
 .msg.error { align-self: flex-start; background: #fdecea; color: var(--rojo); border: 1px solid #f3c2bd; }

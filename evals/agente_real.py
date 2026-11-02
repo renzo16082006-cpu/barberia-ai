@@ -79,14 +79,18 @@ CASOS = [
         "pregunta": "¿Cuánto cuesta un corte con barba?",
         "usa": ["consultar_documentos"],
         "contiene": r"22[,.]50?\s*€?",
+        "no_contiene": r"\[",  # las citas del texto las quita el código...
+        "fuentes": ["servicios.md > Corte + barba"],  # ...y las fuentes las añade él
     },
     {
         "nombre": "Tatuajes -> 'no lo sé'",
         "rol": "cliente",
         "pregunta": "¿Hacéis tatuajes?",
+        "fuentes": [],  # ningún trozo pasa el umbral: no se enseña ninguna fuente
         "usa": ["consultar_documentos"],
         "contiene": r"no (lo )?s[eé]|no (tengo|dispongo de|encuentro)|no (aparece|consta|figura)|no puedo confirmar",
-        "no_contiene": r"\bs[ií],? (hacemos|ofrecemos)",
+        "no_contiene": r"(^|[.!¡]\s*)s[ií],?\s+(hacemos|ofrecemos)|hacéis",  # "Sí, hacemos..." pero no "no sé si hacemos"
+        # ^ antes: r"\bs[ií],? (hacemos|ofrecemos)" daba FALSO POSITIVO con "No sé si hacemos tatuajes".
     },
     {
         "nombre": "Fuera de tema -> frase fija",
@@ -148,6 +152,13 @@ async def ejecutar(client: Client, caso: dict) -> tuple[list[str], dict]:
         fallos.append("no es la frase fija esperada")
     if "contiene" in caso and not re.search(caso["contiene"], texto, re.IGNORECASE):
         fallos.append(f"no contiene /{caso['contiene']}/")
+    if "fuentes" in caso:
+        citas = [f["cita"] for f in r.get("fuentes", [])]
+        if caso["fuentes"] == [] and citas:
+            fallos.append(f"enseña fuentes cuando no debería: {citas}")
+        for cita in caso["fuentes"]:
+            if cita not in citas:
+                fallos.append(f"falta la fuente {cita} (hay: {citas})")
     if "no_contiene" in caso and re.search(caso["no_contiene"], texto, re.IGNORECASE):
         fallos.append(f"contiene lo prohibido /{caso['no_contiene']}/")
     return fallos, r
@@ -186,6 +197,8 @@ async def main():
             for linea in r["traza"]:
                 print("      ", linea)
             print("       →", r["texto"].replace("\n", " ")[:200])
+            if r.get("fuentes"):
+                print("       📄", " · ".join(f["cita"] for f in r["fuentes"]))
             for f in fallos:
                 print("       FALLO:", f)
         fallos = await control_codigo(client)

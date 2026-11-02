@@ -16,6 +16,7 @@ Reglas de seguridad (las impone ESTE código, no el modelo):
 """
 import asyncio
 import json
+import re
 import sys
 import urllib.request
 from datetime import datetime, timedelta
@@ -32,6 +33,9 @@ OLLAMA_URL = "http://localhost:11434/api/chat"
 MODELO = "qwen3.5:4b"  # el mejor del eval (22/25) y el que menos VRAM usa
 MAX_PASOS = 6  # llamadas al modelo por pregunta
 ESCRITURA = {"crear_cita", "cancelar_cita"}
+# Citas que el modelo escriba en el texto ("[servicios.md > Corte + barba]"): se quitan, porque las
+# fuentes las pone el CÓDIGO a partir de lo que devolvió consultar_documentos (nunca inventadas).
+CITA_EN_TEXTO = re.compile(r"\s*\[[^\[\]\n]+?>[^\[\]\n]+?\]")
 DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
 
 
@@ -61,11 +65,13 @@ def prompt_interno() -> str:
 def prompt_cliente() -> str:
     return (
         f"Eres el asistente de la web pública de la barbería {NOMBRE_BARBERIA}; hablas con clientes. {fechas()}"
-        "Responde SOLO sobre horarios, normas (cancelaciones, pagos), cuidados y la barbería, "
+        "Responde SOLO sobre horarios, precios, normas (cancelaciones, pagos), cuidados y la barbería, "
         "usando consultar_documentos; si los documentos no lo dicen, di que no lo sabes. "
         "No tienes acceso a la agenda ni a datos de clientes: para reservar, cambiar o anular "
         "una cita, indica que llamen a la barbería. Si la pregunta no trata de la barbería "
         "(matemáticas, videojuegos, noticias, deberes...), no la respondas. "
+        "Hablas EN NOMBRE de la barbería, en primera persona del plural "
+        "(\"abrimos a las 10:00\", \"aceptamos Bizum\"), nunca como si fueras el cliente. "
         "Responde en español, breve y amable."
     )
 
@@ -118,6 +124,7 @@ class Agente:
         self.pendiente = None  # llamada de escritura esperando confirmación
         self.pasos = 0
         self.traza = []  # qué tools se han usado en esta pregunta (para mostrarlo)
+        self.fuentes = []  # trozos de documentos que devolvió consultar_documentos en esta pregunta
 
     @classmethod
     async def crear(cls, client: Client, rol: str = "interno") -> "Agente":
@@ -136,6 +143,7 @@ class Agente:
         self.mensajes.append({"role": "user", "content": texto})
         self.pasos = 0
         self.traza = []
+        self.fuentes = []
         return await self._bucle()
 
     async def confirmar(self, si: bool) -> dict:
@@ -182,7 +190,8 @@ class Agente:
                 {"role": "assistant", "content": msg.get("content", ""), "tool_calls": msg.get("tool_calls", [])}
             )
             if not msg.get("tool_calls"):
-                texto = msg.get("content", "")
+                texto = CITA_EN_TEXTO.sub("", msg.get("content", "")).strip()
+                self.mensajes[-1]["content"] = texto  # el historial guarda lo que de verdad se mostró
                 # Cuenta solo tools EJECUTADAS (🔧): un intento bloqueado (⛔) no es haber mirado los documentos.
                 if ROLES[self.rol]["exige_documentos"] and not any(t.startswith("🔧") for t in self.traza):
                     texto = FUERA_DE_TEMA
@@ -203,7 +212,12 @@ class Agente:
         args = self._argumentos(llamada)
         self.traza.append(f"🔧 {nombre}({', '.join(f'{k}={v}' for k, v in args.items())})")
         try:
-            return (await self.client.call_tool(nombre, args)).data
+            datos = (await self.client.call_tool(nombre, args)).data
+            if nombre == "consultar_documentos" and isinstance(datos, dict):
+                for f in datos.get("fragmentos", []):
+                    if all(x["cita"] != f["cita"] for x in self.fuentes):
+                        self.fuentes.append({"cita": f["cita"], "seccion": f["seccion"]})
+            return datos
         except Exception as e:  # los errores del servidor (permisos, validación) vuelven al modelo
             return {"error": str(e)}
 
@@ -217,7 +231,7 @@ class Agente:
         )
 
     def _respuesta(self, texto: str) -> dict:
-        return {"tipo": "respuesta", "texto": texto, "traza": self.traza}
+        return {"tipo": "respuesta", "texto": texto, "traza": self.traza, "fuentes": self.fuentes}
 
 
 def leer(pregunta: str) -> str:
@@ -247,6 +261,8 @@ async def chat_terminal():
             for linea in r["traza"]:
                 print("   ", linea)
             print("Asistente:", r["texto"])
+            if r["fuentes"]:
+                print("    📄 Consultado en:", " · ".join(f["cita"] for f in r["fuentes"]))
 
 
 if __name__ == "__main__":
