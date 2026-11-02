@@ -80,8 +80,9 @@ ROLES = {
 # Si el asistente de clientes contesta SIN haber mirado los documentos, no se fía de él:
 # o es una pregunta fuera de tema o se lo está inventando. Lo decide el código, no el modelo.
 FUERA_DE_TEMA = (
-    "Solo puedo ayudarte con cosas de la barbería: horarios, cómo cancelar o cambiar una cita, "
-    "formas de pago y cuidados después del corte. ¿Qué quieres saber?"
+    "Solo puedo ayudarte con dudas de la barbería: horarios, precios, cómo cancelar o cambiar una cita, "
+    "formas de pago y cuidados después del corte. Para reservar, llama o escribe por WhatsApp al "
+    "977 000 111. ¿Qué quieres saber?"
 )
 
 

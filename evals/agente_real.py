@@ -73,6 +73,14 @@ CASOS = [
         "contiene": r"\b2\s*(h\b|horas)",
     },
     {
+        # El precio tiene que coincidir con la tabla servicios de la BD (22,50 €) y con la web.
+        "nombre": "Precio de Corte + barba = 22,50 € (RAG)",
+        "rol": "cliente",
+        "pregunta": "¿Cuánto cuesta un corte con barba?",
+        "usa": ["consultar_documentos"],
+        "contiene": r"22[,.]50?\s*€?",
+    },
+    {
         "nombre": "Tatuajes -> 'no lo sé'",
         "rol": "cliente",
         "pregunta": "¿Hacéis tatuajes?",
