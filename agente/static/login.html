@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>El Navajas · Acceso del personal</title>
+  <link rel="preload" href="/static/fonts/jost.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/login.css">
+  <script src="/static/login.js" defer></script>
+</head>
+<body class="login">
+  <main class="tarjeta">
+    <p class="marca">El Navajas</p>
+    <h1>Acceso del personal</h1>
+    <p class="explica">El panel interno ve la agenda, los clientes y las ventas. Solo para el equipo de la barbería.</p>
+
+    <form id="acceso" class="acceso" novalidate>
+      <label for="clave">Contraseña</label>
+      <input id="clave" name="clave" type="password" autocomplete="current-password" maxlength="200" required autofocus>
+      <button id="entrar" type="submit">Entrar</button>
+      <p id="aviso" class="aviso" role="alert"></p>
+    </form>
+
+    <a class="volver" href="/">← Volver a la web</a>
+  </main>
+</body>
+</html>

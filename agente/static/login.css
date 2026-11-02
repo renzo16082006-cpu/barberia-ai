@@ -1,0 +1,45 @@
+/* Acceso del personal: mismo mundo que el panel (oscuro, arena, Bodoni + Jost), una sola tarjeta. */
+@font-face { font-family: "Bodoni Moda"; src: url("/static/fonts/bodoni-moda.woff2") format("woff2"); font-weight: 400 900; font-display: swap; }
+@font-face { font-family: "Jost"; src: url("/static/fonts/jost.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+
+body.login {
+  --papel: #f3eee3; --surface: #d2cab8; --ink: #2a2a26; --muted: #59574e;
+  --accent: #4f6238; --granate: #9b2b25; --oscuro: #1f1f1c;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  margin: 0; min-height: 100vh; min-height: 100svh;
+  display: grid; place-items: center; padding: 24px; box-sizing: border-box;
+  background: var(--oscuro); color: var(--ink);
+  font: 400 16px/1.55 "Jost", "Segoe UI", system-ui, sans-serif;
+}
+body.login :focus-visible { outline: 3px solid var(--granate); outline-offset: 2px; }
+
+.tarjeta {
+  width: 100%; max-width: 380px; box-sizing: border-box;
+  background: var(--papel); padding: 36px 32px 28px;
+  animation: entra 320ms var(--ease-out) both;
+}
+.marca { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 500; }
+.tarjeta h1 { margin: 0 0 10px; font: 500 30px/1.1 "Bodoni Moda", Didot, Georgia, serif; }
+.explica { margin: 0 0 24px; color: var(--muted); font-size: 15px; }
+
+.acceso { display: grid; gap: 8px; }
+.acceso label { font-weight: 500; font-size: 15px; }
+.acceso input {
+  font: inherit; padding: 12px 14px; border: 1px solid var(--surface); border-radius: 0; background: #fff; color: var(--ink);
+  transition: border-color 160ms ease;
+}
+.acceso input:focus { border-color: var(--ink); outline: none; }
+.acceso button {
+  margin-top: 8px; font: 500 16px "Jost", sans-serif; padding: 12px 16px; border: 0; border-radius: 0;
+  background: var(--oscuro); color: var(--papel); cursor: pointer;
+  transition: transform 160ms var(--ease-out), opacity 160ms ease;
+}
+.acceso button:active { transform: scale(0.97); }
+.acceso button:disabled { opacity: 0.6; cursor: wait; }
+.aviso { margin: 4px 0 0; min-height: 1.5em; color: var(--granate); font-size: 14px; }
+
+.volver { display: inline-block; margin-top: 18px; color: var(--muted); font-size: 14px; text-decoration: none; }
+@media (hover: hover) and (pointer: fine) { .volver:hover { color: var(--ink); } }
+
+@keyframes entra { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .tarjeta { animation: none; } }

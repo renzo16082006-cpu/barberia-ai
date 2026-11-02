@@ -173,7 +173,7 @@ Encima hay una web con **dos puertas** (`agente/web.py`, Starlette):
 
 | | Web pública (`/`) | Panel interno (`/panel`) |
 |---|---|---|
-| Para quién | Clientes | Personal de la barbería |
+| Para quién | Clientes | Personal de la barbería (con contraseña) |
 | Tools | Solo `consultar_documentos` | Las 8 del servidor |
 | Si responde sin usar tools | Frase fija (ver abajo) | Respuesta del modelo |
 
@@ -206,8 +206,18 @@ Encima hay una web con **dos puertas** (`agente/web.py`, Starlette):
   de tamaño de las peticiones.
 - **XSS**: todo lo que escribe el modelo se pinta con `textContent`, nunca con `innerHTML`.
   Probado con `<img src=x onerror=alert(1)>`: se ve como texto.
-- El enlace "Acceso del personal" del pie vale para una demo local. En producción `/panel`
-  necesitaría **login**: esconder una URL es seguridad por oscuridad, no seguridad.
+- **Login del panel** (`agente/acceso.py`): esconder la URL de `/panel` sería seguridad por
+  oscuridad, así que pide contraseña.
+  - En el `.env` solo está su **hash scrypt** con sal (lo genera `agente/crear_clave.py`), nunca la
+    contraseña. Comparación en tiempo constante.
+  - Sesión con un token aleatorio de 256 bits en una cookie `HttpOnly` (el JavaScript no la lee) y
+    `SameSite=Strict` (otra web no la puede usar). Caduca a las 8 horas.
+  - 5 fallos seguidos → 60 segundos sin poder probar.
+  - `/panel` y `/api/interno/*` se protegen en el **middleware** (un solo sitio: una ruta nueva no
+    se queda sin proteger por olvido), con una segunda comprobación en la propia ruta.
+  - **Cerrado por defecto**: sin contraseña configurada no entra nadie.
+  - **Salir** borra la sesión y la conversación: la siguiente persona no ve lo que preguntó la anterior.
+  - En producción faltaría HTTPS y la cookie con `Secure`.
 - Tipografías (OFL) y fotos (Unsplash, con créditos) servidas desde la propia web, sin CDNs.
 
 ### Evals de extremo a extremo
@@ -280,7 +290,8 @@ ollama pull bge-m3
 ollama pull qwen3.5:4b
 uv run python rag\cargar.py
 uv run python mcp_server\probar.py
-uv run python agente\web.py      # web en http://127.0.0.1:8000 (panel en /panel)
+uv run python agente\crear_clave.py   # contraseña del panel: pega la línea que te da en el .env
+uv run python agente\web.py           # web en http://127.0.0.1:8000 (panel en /panel)
 ```
 
 Adminer: http://localhost:8080 (Sistema PostgreSQL, Servidor `db`, usuario `barberia`).

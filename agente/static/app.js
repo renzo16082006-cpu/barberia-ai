@@ -63,6 +63,10 @@ async function api(ruta, datos) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(datos),
   });
+  if (r.status === 401 && ROL === "interno") {
+    location.replace("/login"); // la sesión ha caducado o se ha cerrado
+    return { tipo: "error", texto: "Inicia sesión para usar el panel.", traza: [] };
+  }
   try {
     return await r.json();
   } catch {
@@ -120,6 +124,11 @@ $("#formulario").addEventListener("submit", (e) => {
 document.querySelectorAll(".chip").forEach((chip) =>
   chip.addEventListener("click", () => preguntar(chip.textContent))
 );
+
+$("#salir")?.addEventListener("click", async () => {
+  await api("/api/logout", {});
+  location.replace("/login");
+});
 
 $("#reiniciar").addEventListener("click", async () => {
   await api(`/api/${ROL}/reiniciar`, {});

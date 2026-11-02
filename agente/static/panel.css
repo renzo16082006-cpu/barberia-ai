@@ -86,6 +86,7 @@ body.panel #enviar:active { transform: scale(0.97); }
 body.panel .nueva { display: flex; align-items: center; gap: 10px; }
 .ver-web { display: flex; align-items: center; gap: 10px; color: #cfc8b6; text-decoration: none; font-size: 15px; padding: 10px 2px; transition: color 160ms ease; }
 @media (hover: hover) and (pointer: fine) { .ver-web:hover { color: var(--papel); } }
+.salir { background: none; border: 0; font: inherit; font-size: 15px; cursor: pointer; text-align: left; }
 
 /* ---------- Bienvenida ---------- */
 .bienvenida-emblema { width: 64px; height: 64px; margin-bottom: 18px; }
