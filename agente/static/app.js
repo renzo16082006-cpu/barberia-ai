@@ -6,7 +6,8 @@ const chat = $("#chat");
 const entrada = $("#entrada");
 const enviar = $("#enviar");
 
-const NOMBRES = { crear_cita: "Crear cita", cancelar_cita: "Cancelar cita" };
+const NOMBRES = { crear_cita: "Crear cita", cancelar_cita: "Cancelar cita",
+  recordar: "Recordar un dato del cliente", olvidar: "Olvidar un dato (se borra)" };
 
 function crear(etiqueta, clase, texto) {
   const el = document.createElement(etiqueta);

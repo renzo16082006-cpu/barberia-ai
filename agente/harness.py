@@ -32,7 +32,9 @@ from server import MADRID, NOMBRE_BARBERIA, mcp  # noqa: E402
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODELO = "qwen3.5:4b"  # el mejor del eval (22/25) y el que menos VRAM usa
 MAX_PASOS = 6  # llamadas al modelo por pregunta
-ESCRITURA = {"crear_cita", "cancelar_cita"}
+# Tools que cambian datos: el código pide confirmación humana antes de ejecutarlas.
+# recordar/olvidar también: guardar algo de una persona es una escritura como otra cualquiera.
+ESCRITURA = {"crear_cita", "cancelar_cita", "recordar", "olvidar"}
 # Citas que el modelo escriba en el texto ("[servicios.md > Corte + barba]"): se quitan, porque las
 # fuentes las pone el CÓDIGO a partir de lo que devolvió consultar_documentos (nunca inventadas).
 CITA_EN_TEXTO = re.compile(r"\s*\[[^\[\]\n]+?>[^\[\]\n]+?\]")
@@ -58,6 +60,8 @@ def prompt_interno() -> str:
         f"Eres el asistente interno de la barbería {NOMBRE_BARBERIA}; hablas con el personal. {fechas()}"
         "Usa las tools para consultar o modificar datos; nunca inventes datos. "
         "Si una tool devuelve un error, explícaselo al usuario con tus palabras. "
+        "Si te preguntan por un cliente concreto o por cómo atenderle, mira también consultar_memoria. "
+        "Usa recordar SOLO si el usuario pide recordar algo, con un dato por llamada. "
         "Responde en español, breve y claro."
     )
 
