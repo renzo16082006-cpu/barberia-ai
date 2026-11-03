@@ -81,9 +81,11 @@ def citas_del_dia(fecha: date) -> dict:
 def buscar_cliente(nombre: str) -> dict:
     """Busca clientes de la barbería por nombre o parte del nombre (sin
     distinguir mayúsculas). Devuelve nombre, teléfono, notas, número de
-    citas y fecha de la última visita completada."""
+    citas, fecha de la última visita completada y cuántos datos tiene en la memoria
+    (para leerlos, usa consultar_memoria)."""
     sql = """
-        SELECT cl.nombre,
+        SELECT cl.id,
+               cl.nombre,
                cl.telefono,
                cl.notas,
                count(c.id) AS num_citas,
@@ -99,7 +101,16 @@ def buscar_cliente(nombre: str) -> dict:
     """
     with conectar() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute(sql, (BARBERIA_ID, patron_nombre(nombre)))
-        return {"barberia": NOMBRE_BARBERIA, "busqueda": nombre, "clientes": cur.fetchall()}
+        clientes = cur.fetchall()
+    # El campo "notas" de la ficha hacía creer al modelo que ya lo tenía todo y no abría
+    # la memoria (lo encontró el eval). El CÓDIGO cuenta los datos y se lo dice.
+    for c in clientes:
+        c["datos_en_memoria"] = contar_memoria(c.pop("id"))
+    resultado = {"barberia": NOMBRE_BARBERIA, "busqueda": nombre, "clientes": clientes}
+    if any(c["datos_en_memoria"] for c in clientes):
+        resultado["aviso"] = ("Hay datos guardados en la memoria que no salen aquí: "
+                              "léelos con consultar_memoria antes de responder.")
+    return resultado
 
 
 @mcp.tool
@@ -424,6 +435,16 @@ if MEMORIA_MOTOR not in ("propia", "mem0"):
     raise RuntimeError(f"MEMORIA_MOTOR tiene que ser 'propia' o 'mem0', no '{MEMORIA_MOTOR}'")
 if MEMORIA_MOTOR == "mem0":
     import memoria_mem0  # solo se carga mem0 (y Ollama) si de verdad se usa
+
+
+def contar_memoria(cliente_id: int) -> int:
+    """Cuántos datos hay en la memoria de un cliente, sea cual sea el motor."""
+    if MEMORIA_MOTOR == "mem0":
+        return len(memoria_mem0.listar(BARBERIA_ID, cliente_id))
+    with conectar() as conn, conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM memoria WHERE barberia_id = %s AND cliente_id = %s",
+                    (BARBERIA_ID, cliente_id))
+        return cur.fetchone()[0]
 
 
 def cliente_de_memoria(cliente: str) -> dict:

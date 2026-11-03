@@ -129,6 +129,7 @@ class Agente:
         self.pasos = 0
         self.traza = []  # qué tools se han usado en esta pregunta (para mostrarlo)
         self.fuentes = []  # trozos de documentos que devolvió consultar_documentos en esta pregunta
+        self.hechas = set()  # llamadas (tool + argumentos) ya ejecutadas en esta pregunta
 
     @classmethod
     async def crear(cls, client: Client, rol: str = "interno") -> "Agente":
@@ -148,6 +149,7 @@ class Agente:
         self.pasos = 0
         self.traza = []
         self.fuentes = []
+        self.hechas = set()  # llamadas ya ejecutadas en este turno (para cortar bucles)
         return await self._bucle()
 
     async def confirmar(self, si: bool) -> dict:
@@ -214,6 +216,14 @@ class Agente:
             self.traza.append(f"⛔ {nombre} (no permitida)")
             return {"error": f"La tool {nombre} no existe o no está permitida."}
         args = self._argumentos(llamada)
+        # Misma tool con los mismos argumentos en el mismo turno = bucle (lo encontró el eval de
+        # memoria: leía 5 veces la nota-trampa). El resultado no va a cambiar: no se repite.
+        clave = (nombre, json.dumps(args, sort_keys=True, ensure_ascii=False))
+        if clave in self.hechas:
+            self.traza.append(f"🔁 {nombre} repetida (no se ejecuta otra vez)")
+            return {"aviso": "Ya tienes el resultado de esta misma llamada más arriba. "
+                             "No la repitas: responde ya con lo que tienes."}
+        self.hechas.add(clave)
         self.traza.append(f"🔧 {nombre}({', '.join(f'{k}={v}' for k, v in args.items())})")
         try:
             datos = (await self.client.call_tool(nombre, args)).data
