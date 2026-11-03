@@ -10,7 +10,6 @@ Qué comprueba:
   4. delete_all() -> borra... ¿todo? (miramos qué queda en el historial).
 """
 import os
-import sqlite3
 import time
 from pathlib import Path
 
@@ -30,7 +29,6 @@ from mem0 import Memory  # noqa: E402
 load_dotenv()
 
 OLLAMA = "http://localhost:11434"
-HISTORIAL = CARPETA / "historial.db"
 
 CONFIG = {
     # Nombres EXACTOS de modelos que ya tienes: si no existen, mem0 los descarga solo.
@@ -46,7 +44,9 @@ CONFIG = {
         "dbname": os.environ["POSTGRES_DB"],
         "collection_name": "mem0_prueba",   # tabla propia, separada de `memoria`
         "embedding_model_dims": 1024}},
-    "history_db_path": str(HISTORIAL),
+    # ":memory:" = SQLite en RAM: al arrancar no se crea ningún archivo.
+    # Justo después lo cambiamos por SinHistorial, que no guarda nada.
+    "history_db_path": ":memory:",
     # mem0 2.2.1 traduce al inglés por defecto (use_input_language=False y no
     # se puede cambiar desde la config). Se lo pedimos con instrucciones propias.
     "custom_instructions": (
@@ -60,6 +60,34 @@ PEDRO_NAVAJAS = "b1-c1"   # barberia 1, cliente 1
 PEDRO_CORTE_FINO = "b2-c4"  # mismo nombre, otra barbería
 
 
+class SinHistorial:
+    """Sustituye al historial SQLite de mem0 y NO guarda nada.
+
+    mem0 guarda ahí la frase original (messages) y, al borrar, el texto borrado
+    (history): "olvidar" no olvidaría. Lo que no se guarda no hay que borrarlo.
+    """
+
+    def __init__(self):
+        self.descartados = 0
+
+    def _descartar(self, *args, **kwargs):
+        self.descartados += 1
+
+    save_messages = add_history = batch_add_history = _descartar
+
+    def get_last_messages(self, *args, **kwargs):
+        return []  # sin contexto de mensajes anteriores: cada dato va solo
+
+    def get_history(self, *args, **kwargs):
+        return []
+
+    def reset(self):
+        pass
+
+    def close(self):
+        pass
+
+
 def cronometro(texto, funcion):
     inicio = time.perf_counter()
     resultado = funcion()
@@ -69,6 +97,8 @@ def cronometro(texto, funcion):
 
 print("0) Creando Memory (conecta con Postgres y Ollama)...")
 m = cronometro("arranque", lambda: Memory.from_config(CONFIG))
+m.db.close()
+m.db = SinHistorial()
 
 # mem0 no deja configurar el "thinking" de Ollama y qwen3.5 piensa por defecto.
 # Envolvemos la llamada para (a) apagarlo, como en el harness, y (b) ver qué
@@ -111,9 +141,5 @@ m.delete_all(user_id=PEDRO_NAVAJAS)
 r = m.get_all(filters={"user_id": PEDRO_NAVAJAS})
 print(f"   Recuerdos que quedan en pgvector: {len(r.get('results', []))} (esperado: 0)")
 
-print("\n5) ¿Y en el historial SQLite de mem0?")
-con = sqlite3.connect(HISTORIAL)
-for tabla in ("history", "messages"):
-    n = con.execute(f"SELECT count(*) FROM {tabla}").fetchone()[0]
-    print(f"   Filas en {tabla}: {n}")
-con.close()
+print("\n5) ¿Qué ha intentado guardar mem0 en su historial?")
+print(f"   Escrituras descartadas: {m.db.descartados} (no se ha guardado ninguna)")
